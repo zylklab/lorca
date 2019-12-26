@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class GrafanaRestTableResponse {
+public class GrafanaRestQueryTableResponse {
 	
 	@JsonProperty("columns")
 	private List<GrafanaRestColumn> columns;
@@ -15,7 +15,7 @@ public class GrafanaRestTableResponse {
 	@JsonProperty("type")
 	private String type;
     
-    public GrafanaRestTableResponse() {
+    public GrafanaRestQueryTableResponse() {
     	
     }
 

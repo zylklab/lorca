@@ -1,19 +1,18 @@
 package net.zylklab.grafana.kafka.rest.pojo.response;
 
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class GrafanaRestTimeserieResponse {
+public class GrafanaRestQueryTimeserieResponse {
 	
 	@JsonProperty("target")
 	private String target;
 	
 	@JsonProperty("datapoints")
-	private List<Map<Object, Long>> datapoints;
+	private List<Object[]> datapoints;
     
-    public GrafanaRestTimeserieResponse() {
+    public GrafanaRestQueryTimeserieResponse() {
     	
     }
 
@@ -25,11 +24,11 @@ public class GrafanaRestTimeserieResponse {
 		this.target = target;
 	}
 
-	public List<Map<Object, Long>> getDatapoints() {
+	public List<Object[]> getDatapoints() {
 		return datapoints;
 	}
 
-	public void setDatapoints(List<Map<Object, Long>> datapoints) {
+	public void setDatapoints(List<Object[]> datapoints) {
 		this.datapoints = datapoints;
 	}
 
