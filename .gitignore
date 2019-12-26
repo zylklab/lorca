@@ -1,4 +1,8 @@
 # Directories #
+Servers
+**/Servers
+**/Servers/**
+Servers/**
 .recommenders
 .recommenders/
 **/.recommenders
