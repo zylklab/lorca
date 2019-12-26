@@ -2,48 +2,65 @@ package net.zylklab.grafana.kafka.rest.pojo.request;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class GrafanaRestQueryRequest {
-/*
-	{
-		  "panelId": 1,
-		  "range": {
-		    "from": "2016-10-31T06:33:44.866Z",
-		    "to": "2016-10-31T12:33:44.866Z",
-		    "raw": {
-		      "from": "now-6h",
-		      "to": "now"
-		    }
-		  },
-		  "rangeRaw": {
-		    "from": "now-6h",
-		    "to": "now"
-		  },
-		  "interval": "30s",
-		  "intervalMs": 30000,
-		  "targets": [
-		     { "target": "upper_50", "refId": "A", "type": "timeserie" },
-		     { "target": "upper_75", "refId": "B", "type": "timeserie" }
-		  ],
-		  "adhocFilters": [{
-		    "key": "City",
-		    "operator": "=",
-		    "value": "Berlin"
-		  }],
-		  "format": "json",
-		  "maxDataPoints": 550
+	/*
+		{
+			"requestId":"Q108",
+			"timezone":"",
+			"panelId":2,
+			"dashboardId":null,
+			"range":{
+					"from":"2019-12-26T09:41:41.289Z",
+					"to":"2019-12-26T15:41:41.289Z",
+					"raw":{
+							"from":"now-6h",
+							"to":"now"
+						}
+			},
+			"interval":"20s",
+			"intervalMs":20000,
+			"targets":[
+					{"refId":"A","type":"timeserie"}
+			],
+			"maxDataPoints":930,
+			"startTime":1577374901290,
+			"rangeRaw":{
+					"from":"now-6h",
+					"to":"now"
+			},
+			"adhocFilters":[],
+			"scopedVars":{
+					"__interval":{
+							"text":"20s",
+							"value":"20s"},
+					"__interval_ms":{
+							"text":"20000",
+							"value":20000
+						}
+			}
+			
 		}
-*/
+	*/
+	
+	
+	@JsonProperty("requestId")
+	private String requestId;
+	
+	@JsonProperty("timezone")
+	private String timezone;
 	
 	@JsonProperty("panelId")
 	private int panelId;
 	
+	@JsonProperty("dashboardId")
+	private int dashboardId;
+	
 	@JsonProperty("range")
 	private GrafanaRestRange range;
-	
-	@JsonProperty("rangeRaw")
-	private GrafanaRestRaw rangeRaw;
 	
 	@JsonProperty("interval")
 	private String interval;
@@ -54,20 +71,25 @@ public class GrafanaRestQueryRequest {
 	@JsonProperty("targets")
 	private List<GrafanaRestTarget> targets;
 	
+	@JsonProperty("maxDataPoints")
+	private long maxDataPoints;
+	
+	@JsonProperty("startTime")
+	private long startTime;
+	
+	@JsonProperty("rangeRaw")
+	private GrafanaRestRaw rangeRaw;
+	
 	@JsonProperty("adhocFilters")
 	private List<GrafanaRestAdhocFilter> adhocFilters;
 	
 	@JsonProperty("format")
 	private String format;
 	
-	@JsonProperty("maxDataPoints")
-	private long maxDataPoints;
 	
 	public GrafanaRestQueryRequest() {
 		
 	}
-
-	
 	
 	public GrafanaRestQueryRequest(int panelId, GrafanaRestRange range, GrafanaRestRaw rangeRaw, String interval,
 			long intervalMs, List<GrafanaRestTarget> targets, List<GrafanaRestAdhocFilter> adhocFilters, String format,

@@ -5,11 +5,21 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvider;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import io.swagger.annotations.Api;
 import net.zylklab.grafana.kafka.rest.pojo.GrafanaRestResponseWrapper;
@@ -41,6 +51,7 @@ import net.zylklab.grafana.kafka.rest.pojo.response.GrafanaRestTagValuesResponse
 @Api(value = "Kafka Grafana REST API v1.0")
 @Path("/")
 public class KafkaGrafanaService {
+	
 	private static final int RESPONSE_OK_SUCCESS_CODE = 200;
 	private static final int RESPONSE_GENERAL_ERROR_CODE = 500;
 	
@@ -53,7 +64,7 @@ public class KafkaGrafanaService {
 	}
 	
 	@Path("/search")
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public GrafanaRestResponseWrapper<List<String>> query(GrafanaRestSearchRequest query) {
 		String[] a = {"upper_25","upper_50","upper_75","upper_90","upper_95"};
@@ -61,7 +72,7 @@ public class KafkaGrafanaService {
 	}
 	
 	@Path("/query")
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public GrafanaRestResponseWrapper<List<GrafanaRestQueryTimeserieResponse>> searchTimeSerie(GrafanaRestQueryRequest query) {
 		try {
@@ -101,7 +112,7 @@ public class KafkaGrafanaService {
 	}
 	
 	@Path("/annotations")
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public GrafanaRestResponseWrapper<GrafanaRestAnnotationResponse> annotations(GrafanaRestAnnotationRequest query) {
 		String[] tags = {"tag1","tag2"};
@@ -111,7 +122,7 @@ public class KafkaGrafanaService {
 	}
 	
 	@Path("/tag-keys")
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public GrafanaRestResponseWrapper<List<GrafanaRestTagKeysResponse>> tagKeys() {
 		List<GrafanaRestTagKeysResponse> a = new ArrayList<>();
@@ -122,7 +133,7 @@ public class KafkaGrafanaService {
 	}
 	
 	@Path("/tag-values")
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public GrafanaRestResponseWrapper<List<GrafanaRestTagValuesResponse>> tagValues(GrafanaRestTagValuesRequest query) {
 		List<GrafanaRestTagValuesResponse> a = new ArrayList<>();
