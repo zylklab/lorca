@@ -1,0 +1,11 @@
+{
+    "type": "record",
+    "namespace": "net.zylklab.grafana.kafka.avro.auto",
+    "name": "ArcelorRecord",
+    "fields":
+    [
+        {"name": "id",          "type": ["null","int"],  		"default": null},
+        {"name": "value",     	"type": ["null","double"],		"default": null},
+        {"name": "timestamp",   "type": ["null","long"],		"default": null}
+    ]
+}
