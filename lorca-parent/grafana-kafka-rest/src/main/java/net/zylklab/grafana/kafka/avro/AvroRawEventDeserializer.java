@@ -1,41 +1,59 @@
 package net.zylklab.grafana.kafka.avro;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import net.zylklab.grafana.kafka.avro.auto.ArcelorRecord;
+import net.zylklab.grafana.kafka.avro.auto.EventRecord;
 
-public class AvroRawEventDeserializer implements Deserializer<ArcelorRecord> {
+public class AvroRawEventDeserializer implements Deserializer<EventRecord> {
+	private static final Logger _log = LoggerFactory.getLogger(AvroRawEventDeserializer.class);
+	private transient BinaryDecoder decoder;
+	private transient DatumReader<EventRecord> reader;
+	private boolean ignoreDeserializeExceptions= false;
 
 	@Override
 	public void configure(Map<String, ?> configs, boolean isKey) {
-		
+
 	}
 
 	@Override
-	public ArcelorRecord deserialize(String topic, byte[] data) {
+	public EventRecord deserialize(String topic, byte[] data) {
 		// Deserialize record
-		ArcelorRecord record = null;
-		BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(data, null);
-		DatumReader<ArcelorRecord> reader = new SpecificDatumReader<ArcelorRecord>(ArcelorRecord.getClassSchema());
+		ensureInitialized();
+		this.decoder = DecoderFactory.get().binaryDecoder(data, this.decoder);
 		try {
-			reader.read(record, decoder);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return this.reader.read(null, this.decoder);
+		} catch (Exception e) {
+			if(ignoreDeserializeExceptions){
+				_log.warn(String.format("Error la procesar el mensaje avro, no se detiene el proceso"),e);
+                return null;
+			} else {
+                throw new RuntimeException(e.getMessage(),e);
+			}
 		}
-		return record;
 	}
 
 	@Override
 	public void close() {
-		
+
+	}
+
+	private void ensureInitialized() {
+		if (this.reader == null) {
+			if (org.apache.avro.specific.SpecificRecordBase.class.isAssignableFrom(EventRecord.class)) {
+				this.reader = new SpecificDatumReader<EventRecord>(EventRecord.class);
+			} else {
+				this.reader = new ReflectDatumReader<EventRecord>(EventRecord.class);
+			}
+		}
 	}
 
 }

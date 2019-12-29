@@ -9,7 +9,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -18,9 +20,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
 import net.zylklab.grafana.kafka.avro.AvroRawEventDeserializer;
-import net.zylklab.grafana.kafka.avro.auto.ArcelorRecord;
+import net.zylklab.grafana.kafka.avro.auto.EventRecord;
 import net.zylklab.grafana.kafka.rest.pojo.request.GrafanaRestRange;
 import net.zylklab.grafana.kafka.rest.pojo.request.GrafanaRestTarget;
 import net.zylklab.grafana.kafka.rest.pojo.response.GrafanaRestQueryTimeserieResponse;
@@ -45,34 +48,49 @@ public class KafkaGrafanaUtil {
 	
 	//https://dzone.com/articles/kafka-producer-and-consumer-example
 	@SuppressWarnings("unchecked")
-	synchronized private static List<ArcelorRecord> getRecords(long tsInitial, long tsFinal, String target) {
-		List<ArcelorRecord> result = new ArrayList<>();
+	synchronized private static List<EventRecord> getRecords(long tsInitial, long tsFinal, Integer target) {
+		System.out.print("Initial ms: "+tsInitial);
+		System.out.print("Final   ms: "+tsFinal);
+		System.out.print("Target  ms: "+target);
+		
+		List<EventRecord> result = new ArrayList<>();
 		Properties props = new Properties();
 		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKERS);
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_CONFIG);
-		// props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-		// LongDeserializer.class.getName());
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, AvroRawEventDeserializer.class.getName());
 		props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS);
 		props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OFFSET_RESET_EARLIER);
-		try(Consumer<String, ArcelorRecord> consumer = new KafkaConsumer<>(props)) {
-			consumer.subscribe(Collections.singletonList(RAW_EVENTS_TOPIC_NAME));
-			
+		try(Consumer<String, EventRecord> consumer = new KafkaConsumer<>(props)) {
+			//en vez de iniciar con hay que iniciar con consumer.assign para que se puede hacer un seek
+			//consumer.subscribe(Collections.singletonList(RAW_EVENTS_TOPIC_NAME));
+			List<TopicPartition> assigns = new ArrayList<>();
 			Map<TopicPartition, Long> initialTimestampsToSearch = new HashMap<TopicPartition, Long>();
 			Map<TopicPartition, Long> finalTimestampsToSearch = new HashMap<TopicPartition, Long>();
 			for(int i = 0; i < TOPIC_PARTITION_NUMBER; i++) {
-				initialTimestampsToSearch.put(new TopicPartition(RAW_EVENTS_TOPIC_NAME, i), tsInitial);
-				finalTimestampsToSearch.put(new TopicPartition(RAW_EVENTS_TOPIC_NAME, i), tsFinal);
+				TopicPartition tp = new TopicPartition(RAW_EVENTS_TOPIC_NAME, i);
+				initialTimestampsToSearch.put(tp, tsInitial);
+				finalTimestampsToSearch.put(tp, tsFinal);
+				assigns.add(tp);
 			}
+			consumer.assign(assigns);
 			
 			Map<TopicPartition, OffsetAndTimestamp> initialOffsetAndTimestamp = null;
 			Map<TopicPartition, OffsetAndTimestamp> finalOffsetAndTimestamp = null;
+			Map<TopicPartition, Long> finalOffset = new HashMap<>();
 			initialOffsetAndTimestamp = consumer.offsetsForTimes(initialTimestampsToSearch);
 			finalOffsetAndTimestamp = consumer.offsetsForTimes(finalTimestampsToSearch);
-			List<Map<TopicPartition, OffsetAndTimestamp>> a = new ArrayList<>();
-			a.add(initialOffsetAndTimestamp);
-			a.add(finalOffsetAndTimestamp);
+			for (Map.Entry<TopicPartition, OffsetAndTimestamp> entry : finalOffsetAndTimestamp.entrySet()) {
+				TopicPartition key = entry.getKey();
+	    		OffsetAndTimestamp value = entry.getValue();
+	    		if(value == null) {
+	    			finalOffset = consumer.endOffsets(assigns);
+	    			break;
+	    		} else {
+	    			finalOffset.put(key, value.offset());
+	    		}
+			}
 			Boolean flag = true;
 			boolean[] counter = new boolean[TOPIC_PARTITION_NUMBER];
 			boolean[] counterTrue = new boolean[TOPIC_PARTITION_NUMBER];
@@ -81,19 +99,34 @@ public class KafkaGrafanaUtil {
 			//https://blog.sysco.no/integration/kafka-rewind-consumers-offset/
 			
 			while (isFinalized(counter, counterTrue)) {
-				ConsumerRecords<String, ArcelorRecord> consumerRecords = consumer.poll(POOL_DURATION);
 				//Fijo el inicio del consumer a la offset inicial para cada particion
 			    if(flag) {
-			    	initialOffsetAndTimestamp.entrySet().stream().forEach(entry -> consumer.seek(entry.getKey(), entry.getValue().offset()));
+			    	for (Map.Entry<TopicPartition, OffsetAndTimestamp> entry : initialOffsetAndTimestamp.entrySet()) {
+			    		TopicPartition key = entry.getKey();
+			    		OffsetAndTimestamp value = entry.getValue();
+			    		//si value es null quiere decir que la fecha from es posterior a todas las fechas de la partición por lo que no hay offset disponible
+			    		if(key != null && value != null) {
+			    			//hay que asignar las partición antes de hacer el seek
+			    			//https://stackoverflow.com/questions/41008610/kafkaconsumer-0-10-java-api-error-message-no-current-assignment-for-partition
+			    			System.out.println(String.format("Partition %s initial offset %s, initial ts ",key.partition() ,value.offset(), value.timestamp()));
+			    			consumer.seek(key, value.offset());
+			    		} else if(value == null) {
+			    			System.out.println(String.format("No se ha encontrado offset para la partición Partition %s ",key.partition()));
+			    			return result;
+			    		}
+			    	}
 			        flag = false;
 			    }
+			    ConsumerRecords<String, EventRecord> consumerRecords = consumer.poll(POOL_DURATION);
 
-			    for (ConsumerRecord<String, ArcelorRecord> record : consumerRecords) {
+			    for (ConsumerRecord<String, EventRecord> record : consumerRecords) {
 			    	int partition = record.partition();
 			    	long offset = record.offset();
-			    	if(finalOffsetAndTimestamp.get(new TopicPartition(RAW_EVENTS_TOPIC_NAME, partition)).offset() > offset) {
-			    		//TODO: hay que comprobar que el id registrado de la métrica corresponde con el id del evento... uno es un string y el otro es un int...
-			    		result.add(record.value());
+			    	Long max = finalOffset.get(new TopicPartition(RAW_EVENTS_TOPIC_NAME, partition)) - 1;
+			    	if(max != null && max > offset) {
+			    		EventRecord r = record.value();
+			    		if(r != null && r.getId() != null && r.getId().equals(target))
+			    			result.add(record.value());
 			    		counter[partition] = Boolean.FALSE;
 			    	} else {
 			    		counter[partition] = Boolean.TRUE;
@@ -106,7 +139,7 @@ public class KafkaGrafanaUtil {
 	}
 	
 	private static boolean isFinalized(boolean[] counter, boolean[] counterTrue) {
-		return Arrays.equals(counter, counterTrue);
+		return !Arrays.equals(counter, counterTrue);
 	}
 
 	public static GrafanaRestQueryTimeserieResponse buildQueryResponse(GrafanaRestTarget target, GrafanaRestRange range, long intervalMs) throws ParseException {
@@ -121,14 +154,14 @@ public class KafkaGrafanaUtil {
 		long from = GRAFANA_SDF.parse(range.getFrom()).getTime();
 		long to = GRAFANA_SDF.parse(range.getTo()).getTime();
 		List<Object[]> datapoint = new ArrayList<Object[]>();
-		List<ArcelorRecord> result = getRecords(from,to, target.getTarget());
-		for (ArcelorRecord arcelorRecord : result) {
+		List<EventRecord> result = getRecords(from,to, Integer.parseInt(target.getTarget()));
+		for (EventRecord arcelorRecord : result) {
 			datapoint.add(buildDataFromAvro(arcelorRecord));	
 		}
 		return datapoint;
 	}
 
-	private static Object[] buildDataFromAvro(ArcelorRecord record) {
+	private static Object[] buildDataFromAvro(EventRecord record) {
 		Object[] a = new Object[2];
 		a[0] = record.getValue();
 		a[1] = record.getTimestamp();
@@ -137,7 +170,9 @@ public class KafkaGrafanaUtil {
 
 	public static void main(String[] args) throws ParseException {
 		String s = "2019-12-27T07:08:22.238Z";
-		long from = GRAFANA_SDF.parse(s).getTime();
+		long from = 1577449140000l; //27-dic-2019 12:19:000.000Z
+		long to = System.currentTimeMillis();
+		KafkaGrafanaUtil.getRecords(from,to,1);
 		System.out.println(from);
 	}
 }

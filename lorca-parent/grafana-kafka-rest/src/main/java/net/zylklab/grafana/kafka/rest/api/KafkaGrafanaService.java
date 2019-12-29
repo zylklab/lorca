@@ -12,7 +12,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import io.swagger.annotations.Api;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.zylklab.grafana.kafka.rest.pojo.GrafanaRestResponseWrapper;
 import net.zylklab.grafana.kafka.rest.pojo.GrafanaRestSimpleResponseMessage;
 import net.zylklab.grafana.kafka.rest.pojo.exception.WebApplicationRestServiceException;
@@ -41,12 +43,12 @@ import net.zylklab.grafana.kafka.util.KafkaGrafanaUtil;
 
  */
 
-@Api(value = "Kafka Grafana REST API v1.0")
 @Path("/")
 public class KafkaGrafanaService {
 	
 	private static final int RESPONSE_OK_SUCCESS_CODE = 200;
 	private static final int RESPONSE_GENERAL_ERROR_CODE = 500;
+	private static final Logger _log = LoggerFactory.getLogger(KafkaGrafanaService.class);
 	
 	@Path("/")
 	@GET
@@ -60,7 +62,7 @@ public class KafkaGrafanaService {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public GrafanaRestResponseWrapper<List<String>> query(GrafanaRestSearchRequest query) {
-		String[] a = {"Grosor","Velocidad","Aceleración"};
+		String[] a = {"1","2"};
 		return new GrafanaRestResponseWrapper<List<String>>(RESPONSE_OK_SUCCESS_CODE, Status.OK.getStatusCode(), null, Arrays.asList(a));
 	}
 	
@@ -69,6 +71,8 @@ public class KafkaGrafanaService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<GrafanaRestQueryTimeserieResponse> searchTimeSerie(GrafanaRestQueryRequest query) {
 		try {
+			_log.info(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
+			System.out.println(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
 			List<GrafanaRestQueryTimeserieResponse> responseList = new ArrayList<>();
 			if(null != query) {
 				for(GrafanaRestTarget target: query.getTargets()) {

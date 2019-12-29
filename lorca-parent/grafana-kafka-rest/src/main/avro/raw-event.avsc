@@ -1,7 +1,7 @@
 {
     "type": "record",
     "namespace": "net.zylklab.grafana.kafka.avro.auto",
-    "name": "ArcelorRecord",
+    "name": "EventRecord",
     "fields":
     [
         {"name": "id",          "type": ["null","int"],  		"default": null},

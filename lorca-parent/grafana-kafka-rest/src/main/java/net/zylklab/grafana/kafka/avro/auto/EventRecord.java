@@ -12,23 +12,23 @@ import org.apache.avro.message.SchemaStore;
 
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
-public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = 4530799752316354947L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"ArcelorRecord\",\"namespace\":\"net.zylklab.grafana.kafka.avro.auto\",\"fields\":[{\"name\":\"id\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"value\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"timestamp\",\"type\":[\"null\",\"long\"],\"default\":null}]}");
+public class EventRecord extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
+  private static final long serialVersionUID = 6367772659193402877L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"EventRecord\",\"namespace\":\"net.zylklab.grafana.kafka.avro.auto\",\"fields\":[{\"name\":\"id\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"value\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"timestamp\",\"type\":[\"null\",\"long\"],\"default\":null}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
 
   private static SpecificData MODEL$ = new SpecificData();
 
-  private static final BinaryMessageEncoder<ArcelorRecord> ENCODER =
-      new BinaryMessageEncoder<ArcelorRecord>(MODEL$, SCHEMA$);
+  private static final BinaryMessageEncoder<EventRecord> ENCODER =
+      new BinaryMessageEncoder<EventRecord>(MODEL$, SCHEMA$);
 
-  private static final BinaryMessageDecoder<ArcelorRecord> DECODER =
-      new BinaryMessageDecoder<ArcelorRecord>(MODEL$, SCHEMA$);
+  private static final BinaryMessageDecoder<EventRecord> DECODER =
+      new BinaryMessageDecoder<EventRecord>(MODEL$, SCHEMA$);
 
   /**
    * Return the BinaryMessageDecoder instance used by this class.
    */
-  public static BinaryMessageDecoder<ArcelorRecord> getDecoder() {
+  public static BinaryMessageDecoder<EventRecord> getDecoder() {
     return DECODER;
   }
 
@@ -36,17 +36,17 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
    * Create a new BinaryMessageDecoder instance for this class that uses the specified {@link SchemaStore}.
    * @param resolver a {@link SchemaStore} used to find schemas by fingerprint
    */
-  public static BinaryMessageDecoder<ArcelorRecord> createDecoder(SchemaStore resolver) {
-    return new BinaryMessageDecoder<ArcelorRecord>(MODEL$, SCHEMA$, resolver);
+  public static BinaryMessageDecoder<EventRecord> createDecoder(SchemaStore resolver) {
+    return new BinaryMessageDecoder<EventRecord>(MODEL$, SCHEMA$, resolver);
   }
 
-  /** Serializes this ArcelorRecord to a ByteBuffer. */
+  /** Serializes this EventRecord to a ByteBuffer. */
   public java.nio.ByteBuffer toByteBuffer() throws java.io.IOException {
     return ENCODER.encode(this);
   }
 
-  /** Deserializes a ArcelorRecord from a ByteBuffer. */
-  public static ArcelorRecord fromByteBuffer(
+  /** Deserializes a EventRecord from a ByteBuffer. */
+  public static EventRecord fromByteBuffer(
       java.nio.ByteBuffer b) throws java.io.IOException {
     return DECODER.decode(b);
   }
@@ -60,7 +60,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
    * to their default values from the schema.  If that is desired then
    * one should use <code>newBuilder()</code>.
    */
-  public ArcelorRecord() {}
+  public EventRecord() {}
 
   /**
    * All-args constructor.
@@ -68,7 +68,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
    * @param value The new value for value
    * @param timestamp The new value for timestamp
    */
-  public ArcelorRecord(java.lang.Integer id, java.lang.Double value, java.lang.Long timestamp) {
+  public EventRecord(java.lang.Integer id, java.lang.Double value, java.lang.Long timestamp) {
     this.id = id;
     this.value = value;
     this.timestamp = timestamp;
@@ -145,36 +145,36 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
   }
 
   /**
-   * Creates a new ArcelorRecord RecordBuilder.
-   * @return A new ArcelorRecord RecordBuilder
+   * Creates a new EventRecord RecordBuilder.
+   * @return A new EventRecord RecordBuilder
    */
-  public static net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder newBuilder() {
-    return new net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder();
+  public static net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder newBuilder() {
+    return new net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder();
   }
 
   /**
-   * Creates a new ArcelorRecord RecordBuilder by copying an existing Builder.
+   * Creates a new EventRecord RecordBuilder by copying an existing Builder.
    * @param other The existing builder to copy.
-   * @return A new ArcelorRecord RecordBuilder
+   * @return A new EventRecord RecordBuilder
    */
-  public static net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder newBuilder(net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder other) {
-    return new net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder(other);
+  public static net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder newBuilder(net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder other) {
+    return new net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder(other);
   }
 
   /**
-   * Creates a new ArcelorRecord RecordBuilder by copying an existing ArcelorRecord instance.
+   * Creates a new EventRecord RecordBuilder by copying an existing EventRecord instance.
    * @param other The existing instance to copy.
-   * @return A new ArcelorRecord RecordBuilder
+   * @return A new EventRecord RecordBuilder
    */
-  public static net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder newBuilder(net.zylklab.grafana.kafka.avro.auto.ArcelorRecord other) {
-    return new net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder(other);
+  public static net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder newBuilder(net.zylklab.grafana.kafka.avro.auto.EventRecord other) {
+    return new net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder(other);
   }
 
   /**
-   * RecordBuilder for ArcelorRecord instances.
+   * RecordBuilder for EventRecord instances.
    */
-  public static class Builder extends org.apache.avro.specific.SpecificRecordBuilderBase<ArcelorRecord>
-    implements org.apache.avro.data.RecordBuilder<ArcelorRecord> {
+  public static class Builder extends org.apache.avro.specific.SpecificRecordBuilderBase<EventRecord>
+    implements org.apache.avro.data.RecordBuilder<EventRecord> {
 
     private java.lang.Integer id;
     private java.lang.Double value;
@@ -189,7 +189,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
      * Creates a Builder by copying an existing Builder.
      * @param other The existing Builder to copy.
      */
-    private Builder(net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder other) {
+    private Builder(net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder other) {
       super(other);
       if (isValidValue(fields()[0], other.id)) {
         this.id = data().deepCopy(fields()[0].schema(), other.id);
@@ -206,10 +206,10 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
     }
 
     /**
-     * Creates a Builder by copying an existing ArcelorRecord instance
+     * Creates a Builder by copying an existing EventRecord instance
      * @param other The existing instance to copy.
      */
-    private Builder(net.zylklab.grafana.kafka.avro.auto.ArcelorRecord other) {
+    private Builder(net.zylklab.grafana.kafka.avro.auto.EventRecord other) {
             super(SCHEMA$);
       if (isValidValue(fields()[0], other.id)) {
         this.id = data().deepCopy(fields()[0].schema(), other.id);
@@ -238,7 +238,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
       * @param value The value of 'id'.
       * @return This builder.
       */
-    public net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder setId(java.lang.Integer value) {
+    public net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder setId(java.lang.Integer value) {
       validate(fields()[0], value);
       this.id = value;
       fieldSetFlags()[0] = true;
@@ -258,7 +258,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
       * Clears the value of the 'id' field.
       * @return This builder.
       */
-    public net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder clearId() {
+    public net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder clearId() {
       id = null;
       fieldSetFlags()[0] = false;
       return this;
@@ -277,7 +277,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
       * @param value The value of 'value'.
       * @return This builder.
       */
-    public net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder setValue(java.lang.Double value) {
+    public net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder setValue(java.lang.Double value) {
       validate(fields()[1], value);
       this.value = value;
       fieldSetFlags()[1] = true;
@@ -297,7 +297,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
       * Clears the value of the 'value' field.
       * @return This builder.
       */
-    public net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder clearValue() {
+    public net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder clearValue() {
       value = null;
       fieldSetFlags()[1] = false;
       return this;
@@ -316,7 +316,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
       * @param value The value of 'timestamp'.
       * @return This builder.
       */
-    public net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder setTimestamp(java.lang.Long value) {
+    public net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder setTimestamp(java.lang.Long value) {
       validate(fields()[2], value);
       this.timestamp = value;
       fieldSetFlags()[2] = true;
@@ -336,7 +336,7 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
       * Clears the value of the 'timestamp' field.
       * @return This builder.
       */
-    public net.zylklab.grafana.kafka.avro.auto.ArcelorRecord.Builder clearTimestamp() {
+    public net.zylklab.grafana.kafka.avro.auto.EventRecord.Builder clearTimestamp() {
       timestamp = null;
       fieldSetFlags()[2] = false;
       return this;
@@ -344,9 +344,9 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
 
     @Override
     @SuppressWarnings("unchecked")
-    public ArcelorRecord build() {
+    public EventRecord build() {
       try {
-        ArcelorRecord record = new ArcelorRecord();
+        EventRecord record = new EventRecord();
         record.id = fieldSetFlags()[0] ? this.id : (java.lang.Integer) defaultValue(fields()[0]);
         record.value = fieldSetFlags()[1] ? this.value : (java.lang.Double) defaultValue(fields()[1]);
         record.timestamp = fieldSetFlags()[2] ? this.timestamp : (java.lang.Long) defaultValue(fields()[2]);
@@ -358,8 +358,8 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
   }
 
   @SuppressWarnings("unchecked")
-  private static final org.apache.avro.io.DatumWriter<ArcelorRecord>
-    WRITER$ = (org.apache.avro.io.DatumWriter<ArcelorRecord>)MODEL$.createDatumWriter(SCHEMA$);
+  private static final org.apache.avro.io.DatumWriter<EventRecord>
+    WRITER$ = (org.apache.avro.io.DatumWriter<EventRecord>)MODEL$.createDatumWriter(SCHEMA$);
 
   @Override public void writeExternal(java.io.ObjectOutput out)
     throws java.io.IOException {
@@ -367,8 +367,8 @@ public class ArcelorRecord extends org.apache.avro.specific.SpecificRecordBase i
   }
 
   @SuppressWarnings("unchecked")
-  private static final org.apache.avro.io.DatumReader<ArcelorRecord>
-    READER$ = (org.apache.avro.io.DatumReader<ArcelorRecord>)MODEL$.createDatumReader(SCHEMA$);
+  private static final org.apache.avro.io.DatumReader<EventRecord>
+    READER$ = (org.apache.avro.io.DatumReader<EventRecord>)MODEL$.createDatumReader(SCHEMA$);
 
   @Override public void readExternal(java.io.ObjectInput in)
     throws java.io.IOException {
