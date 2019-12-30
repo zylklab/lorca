@@ -73,6 +73,7 @@ public class KafkaGrafanaService {
 		try {
 			_log.info(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
 			System.out.println(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
+			System.out.println(String.format("Interval %s ms, maxDataPoints %s", query.getIntervalMs(), query.getMaxDataPoints()));
 			List<GrafanaRestQueryTimeserieResponse> responseList = new ArrayList<>();
 			if(null != query) {
 				for(GrafanaRestTarget target: query.getTargets()) {

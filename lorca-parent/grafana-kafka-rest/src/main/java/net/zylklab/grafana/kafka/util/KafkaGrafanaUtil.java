@@ -5,13 +5,13 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -30,7 +30,11 @@ import net.zylklab.grafana.kafka.rest.pojo.response.GrafanaRestQueryTimeserieRes
 
 public class KafkaGrafanaUtil {
 	private static final String GRAFANA_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-	public static final SimpleDateFormat GRAFANA_SDF = new SimpleDateFormat(GRAFANA_DATE_FORMAT);
+	public static final SimpleDateFormat GRAFANA_SDF; 
+	static{
+			GRAFANA_SDF = new SimpleDateFormat(GRAFANA_DATE_FORMAT);
+			GRAFANA_SDF.setTimeZone(TimeZone.getTimeZone("GMT"));
+	};
 	private static final Duration POOL_DURATION = Duration.ofMillis(1000);
 	
 	private static final String RAW_EVENTS_TOPIC_NAME = "ARCELOR-FLINK";
@@ -49,9 +53,9 @@ public class KafkaGrafanaUtil {
 	//https://dzone.com/articles/kafka-producer-and-consumer-example
 	@SuppressWarnings("unchecked")
 	synchronized private static List<EventRecord> getRecords(long tsInitial, long tsFinal, Integer target) {
-		System.out.print("Initial ms: "+tsInitial);
-		System.out.print("Final   ms: "+tsFinal);
-		System.out.print("Target  ms: "+target);
+		System.out.println("Initial ms: "+tsInitial);
+		System.out.println("Final   ms: "+tsFinal);
+		System.out.println("Target  ms: "+target);
 		
 		List<EventRecord> result = new ArrayList<>();
 		Properties props = new Properties();
@@ -158,7 +162,20 @@ public class KafkaGrafanaUtil {
 		for (EventRecord arcelorRecord : result) {
 			datapoint.add(buildDataFromAvro(arcelorRecord));	
 		}
-		return datapoint;
+		List<Object[]> datapointSorted = datapoint.stream().sorted(new Comparator<Object[]>() {
+			@Override
+			public int compare(Object[] o0, Object[] o1) {
+				Long l0 = (Long) o0[1];
+				Long l1 = (Long) o1[1];
+				if(l0 < l1) {
+					return -1;
+				} else if (l0 == l1) {
+					return 0;
+				} else {
+					return 1;
+				} 
+			}}).collect(Collectors.toList());
+		return datapointSorted;
 	}
 
 	private static Object[] buildDataFromAvro(EventRecord record) {
@@ -172,7 +189,8 @@ public class KafkaGrafanaUtil {
 		String s = "2019-12-27T07:08:22.238Z";
 		long from = 1577449140000l; //27-dic-2019 12:19:000.000Z
 		long to = System.currentTimeMillis();
-		KafkaGrafanaUtil.getRecords(from,to,1);
-		System.out.println(from);
+		//KafkaGrafanaUtil.getRecords(from,to,1);
+		System.out.println(KafkaGrafanaUtil.GRAFANA_SDF.parse(s).getTime());
+		System.out.println(KafkaGrafanaUtil.GRAFANA_SDF.parse(s));
 	}
 }
