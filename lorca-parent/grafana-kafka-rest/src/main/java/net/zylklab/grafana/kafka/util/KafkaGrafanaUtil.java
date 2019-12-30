@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.function.Predicate;
+import java.util.logging.Filter;
+import java.util.logging.LogRecord;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.clients.consumer.Consumer;
@@ -175,7 +178,8 @@ public class KafkaGrafanaUtil {
 					return 1;
 				} 
 			}}).collect(Collectors.toList());
-		return datapointSorted;
+		List<Object[]> datapointWithGap = datapointSorted.stream().filter(new FilterWithGap(intervalMs)).collect(Collectors.toList());
+		return datapointWithGap;
 	}
 
 	private static Object[] buildDataFromAvro(EventRecord record) {
