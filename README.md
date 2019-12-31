@@ -1,5 +1,12 @@
 # lorca
 
+Project to expose rest service for use with grafana. 
+The idea is connect events, in avro formato, published in a kafka topic with grafana timeseries plots
+
+The avro events must have 
+ * one long field, the timsestamp event
+ * another int/duoble field with the vale of the timeserie
+
 ### REST service
 A jaxrs java war. This jaxrs rest service implementa
 
