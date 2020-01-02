@@ -11,21 +11,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
-import java.util.function.Predicate;
-import java.util.logging.Filter;
-import java.util.logging.LogRecord;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
-import net.zylklab.grafana.kafka.avro.AvroRawEventDeserializer;
 import net.zylklab.grafana.kafka.avro.auto.EventRecord;
 import net.zylklab.grafana.kafka.rest.pojo.request.GrafanaRestRange;
 import net.zylklab.grafana.kafka.rest.pojo.request.GrafanaRestTarget;
@@ -40,43 +34,38 @@ public class KafkaGrafanaUtil {
 	};
 	private static final Duration POOL_DURATION = Duration.ofMillis(1000);
 	
-	private static final String RAW_EVENTS_TOPIC_NAME = "ARCELOR-FLINK";
-	private static final int TOPIC_PARTITION_NUMBER = 2;
-	
-	public static String KAFKA_BROKERS = "amaterasu001.bigdata.zylk.net:6667,amaterasu002.bigdata.zylk.net:6667";
-	public static Integer MESSAGE_COUNT = 1000;
-	public static String CLIENT_ID = "client1";
-	public static String GROUP_ID_CONFIG = "consumerGroup1";
-	public static Integer MAX_NO_MESSAGE_FOUND_COUNT = 100;
-	public static String OFFSET_RESET_LATEST = "latest";
-	public static String OFFSET_RESET_EARLIER = "earliest";
-	public static Integer MAX_POLL_RECORDS = 1;
-
+//	props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKERS);
+//	props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_CONFIG);
+//	props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+//	props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, AvroRawEventDeserializer.class.getName());
+//	props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS);
+//	props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+//	props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OFFSET_RESET_EARLIER);
+	private static Properties map2Properties(Map<String, String> map) {
+		Properties properties = new Properties();
+	    for (Map.Entry<String, String> entry : map.entrySet()) {
+	        properties.put(entry.getKey(), entry.getValue());
+	    }
+	    return properties;
+	}
 	
 	//https://dzone.com/articles/kafka-producer-and-consumer-example
 	@SuppressWarnings("unchecked")
-	synchronized private static List<EventRecord> getRecords(long tsInitial, long tsFinal, Integer target) {
+	synchronized private static List<EventRecord> getRecords(long tsInitial, long tsFinal, Integer target, YamlDatasourceConfig datasource) {
 		System.out.println("Initial ms: "+tsInitial);
 		System.out.println("Final   ms: "+tsFinal);
 		System.out.println("Target  ms: "+target);
 		
 		List<EventRecord> result = new ArrayList<>();
-		Properties props = new Properties();
-		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKERS);
-		props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_CONFIG);
-		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, AvroRawEventDeserializer.class.getName());
-		props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS);
-		props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OFFSET_RESET_EARLIER);
-		try(Consumer<String, EventRecord> consumer = new KafkaConsumer<>(props)) {
+		
+		try(Consumer<String, EventRecord> consumer = new KafkaConsumer<>(map2Properties(datasource.getKafkaNativeProperties()))) {
 			//en vez de iniciar con hay que iniciar con consumer.assign para que se puede hacer un seek
 			//consumer.subscribe(Collections.singletonList(RAW_EVENTS_TOPIC_NAME));
 			List<TopicPartition> assigns = new ArrayList<>();
 			Map<TopicPartition, Long> initialTimestampsToSearch = new HashMap<TopicPartition, Long>();
 			Map<TopicPartition, Long> finalTimestampsToSearch = new HashMap<TopicPartition, Long>();
-			for(int i = 0; i < TOPIC_PARTITION_NUMBER; i++) {
-				TopicPartition tp = new TopicPartition(RAW_EVENTS_TOPIC_NAME, i);
+			for(int i = 0; i < datasource.getTopicPartitionsNumber(); i++) {
+				TopicPartition tp = new TopicPartition(datasource.getTopicName(), i);
 				initialTimestampsToSearch.put(tp, tsInitial);
 				finalTimestampsToSearch.put(tp, tsFinal);
 				assigns.add(tp);
@@ -99,8 +88,8 @@ public class KafkaGrafanaUtil {
 	    		}
 			}
 			Boolean flag = true;
-			boolean[] counter = new boolean[TOPIC_PARTITION_NUMBER];
-			boolean[] counterTrue = new boolean[TOPIC_PARTITION_NUMBER];
+			boolean[] counter = new boolean[datasource.getTopicPartitionsNumber()];
+			boolean[] counterTrue = new boolean[datasource.getTopicPartitionsNumber()];
 			Arrays.fill(counter, Boolean.FALSE);
 			Arrays.fill(counterTrue, Boolean.TRUE);
 			//https://blog.sysco.no/integration/kafka-rewind-consumers-offset/
@@ -129,7 +118,7 @@ public class KafkaGrafanaUtil {
 			    for (ConsumerRecord<String, EventRecord> record : consumerRecords) {
 			    	int partition = record.partition();
 			    	long offset = record.offset();
-			    	Long max = finalOffset.get(new TopicPartition(RAW_EVENTS_TOPIC_NAME, partition)) - 1;
+			    	Long max = finalOffset.get(new TopicPartition(datasource.getTopicName(), partition)) - 1;
 			    	if(max != null && max > offset) {
 			    		EventRecord r = record.value();
 			    		if(r != null && r.getId() != null && r.getId().equals(target))
@@ -149,19 +138,19 @@ public class KafkaGrafanaUtil {
 		return !Arrays.equals(counter, counterTrue);
 	}
 
-	public static GrafanaRestQueryTimeserieResponse buildQueryResponse(GrafanaRestTarget target, GrafanaRestRange range, long intervalMs) throws ParseException {
+	public static GrafanaRestQueryTimeserieResponse buildQueryResponse(GrafanaRestTarget target, GrafanaRestRange range, long intervalMs, YamlDatasourceConfig datasource) throws ParseException {
 		GrafanaRestQueryTimeserieResponse response = new GrafanaRestQueryTimeserieResponse();
 		response.setTarget(target.getTarget());
-		response.setDatapoints(consumeEventsFromQueue(target, range, intervalMs));
+		response.setDatapoints(consumeEventsFromQueue(target, range, intervalMs, datasource));
 		return response;
 	}
 
-	private static List<Object[]> consumeEventsFromQueue(GrafanaRestTarget target, GrafanaRestRange range, long intervalMs) throws ParseException {
+	private static List<Object[]> consumeEventsFromQueue(GrafanaRestTarget target, GrafanaRestRange range, long intervalMs, YamlDatasourceConfig datasource) throws ParseException {
 		// 2019-12-27T07:08:22.238Z
 		long from = GRAFANA_SDF.parse(range.getFrom()).getTime();
 		long to = GRAFANA_SDF.parse(range.getTo()).getTime();
 		List<Object[]> datapoint = new ArrayList<Object[]>();
-		List<EventRecord> result = getRecords(from,to, Integer.parseInt(target.getTarget()));
+		List<EventRecord> result = getRecords(from,to, Integer.parseInt(target.getTarget()), datasource);
 		for (EventRecord arcelorRecord : result) {
 			datapoint.add(buildDataFromAvro(arcelorRecord));	
 		}

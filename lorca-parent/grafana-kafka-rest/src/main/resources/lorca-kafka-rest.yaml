@@ -1,0 +1,40 @@
+kafka-datasources:
+   0:
+      kafka-native:
+                     bootstrap.servers: "amaterasu001.bigdata.zylk.net:6667,amaterasu002.bigdata.zylk.net:6667"
+                     group.id: "grafanaConsumerGroup00"
+                     key.deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+                     value.deserializer: "net.zylklab.grafana.kafka.avro.AvroRawEventDeserializer"
+                     max.poll.records: 1000
+                     enable.auto.commit: false
+                     auto.offset.reset: "latest"
+      topic-name: "ARCELOR-FLINK"
+      topic-partitions-number: 2
+      avro-schema:
+      
+      timestamp-field: "timestamp"
+      value-field: "value"
+      value-type: "double"
+      var-name-list: ["grosor","velocidad"]
+      var-id-list:   [1,2]
+      kafka-version: "2.0.0"
+      
+   1:
+      kafka-native:
+                     bootstrap.servers: "amaterasu001.bigdata.zylk.net:6667,amaterasu002.bigdata.zylk.net:6667"
+                     group.id: "grafanaConsumerGroup01"
+                     key.deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+                     value.deserializer: "net.zylklab.grafana.kafka.avro.AvroRawEventDeserializer"
+                     max.poll.records: 1000
+                     enable.auto.commit: false
+                     auto.offset.reset: "latest"
+      topic-name: "RAW-EVENT"
+      topic-partitions-number: 2
+      avro-schema:
+      
+      timestamp-field: "timestamp"
+      value-field: "value"
+      value-type: "double"
+      var-name-list: ["grosor","velocidad","longitud","aceleración"]
+      var-id-list:   [1,2,3,4]
+      kafka-version: "2.0.0"

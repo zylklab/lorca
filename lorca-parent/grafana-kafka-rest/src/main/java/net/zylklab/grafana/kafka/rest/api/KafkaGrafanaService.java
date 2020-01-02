@@ -1,5 +1,7 @@
 package net.zylklab.grafana.kafka.rest.api;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -7,6 +9,7 @@ import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -14,6 +17,11 @@ import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import net.zylklab.grafana.kafka.rest.pojo.GrafanaRestResponseWrapper;
 import net.zylklab.grafana.kafka.rest.pojo.GrafanaRestSimpleResponseMessage;
@@ -28,6 +36,8 @@ import net.zylklab.grafana.kafka.rest.pojo.response.GrafanaRestQueryTimeserieRes
 import net.zylklab.grafana.kafka.rest.pojo.response.GrafanaRestTagKeysResponse;
 import net.zylklab.grafana.kafka.rest.pojo.response.GrafanaRestTagValuesResponse;
 import net.zylklab.grafana.kafka.util.KafkaGrafanaUtil;
+import net.zylklab.grafana.kafka.util.YamlConfig;
+import net.zylklab.grafana.kafka.util.YamlDatasourceConfig;
 
 /*
  	https://github.com/grafana/simple-json-datasource
@@ -49,35 +59,69 @@ public class KafkaGrafanaService {
 	private static final int RESPONSE_OK_SUCCESS_CODE = 200;
 	private static final int RESPONSE_GENERAL_ERROR_CODE = 500;
 	private static final Logger _log = LoggerFactory.getLogger(KafkaGrafanaService.class);
+	private static YamlConfig config = null;
+	private static final String CONFIG_FILE = "lorca-kafka-rest.yaml";
 	
-	@Path("/")
+	private static YamlConfig getConfig() throws JsonParseException, JsonMappingException, IOException {
+		if(config == null) {
+			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+			InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(CONFIG_FILE);
+			config = mapper.readValue(is, YamlConfig.class);
+		}
+		return config;
+	}
+	
+	private static boolean validateProperties(YamlDatasourceConfig datasource) {
+		return true;
+	}
+	
+	@Path("/{datasourceId}/")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public GrafanaRestResponseWrapper<GrafanaRestSimpleResponseMessage> test() {
-		GrafanaRestResponseWrapper<GrafanaRestSimpleResponseMessage> wrapper = new GrafanaRestResponseWrapper<GrafanaRestSimpleResponseMessage>(RESPONSE_OK_SUCCESS_CODE, Status.OK.getStatusCode(), null, new GrafanaRestSimpleResponseMessage(String.format("Got it")));
-		return wrapper;
-	}
-	
-	@Path("/search")
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	public GrafanaRestResponseWrapper<List<String>> query(GrafanaRestSearchRequest query) {
-		String[] a = {"1","2"};
-		return new GrafanaRestResponseWrapper<List<String>>(RESPONSE_OK_SUCCESS_CODE, Status.OK.getStatusCode(), null, Arrays.asList(a));
-	}
-	
-	@Path("/query")
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	public List<GrafanaRestQueryTimeserieResponse> searchTimeSerie(GrafanaRestQueryRequest query) {
+	public GrafanaRestResponseWrapper<GrafanaRestSimpleResponseMessage> test(@PathParam("datasourceId") int datasourceId) {
 		try {
+			YamlConfig config = getConfig();
+			YamlDatasourceConfig datasource = config.getDatasource().get(datasourceId);
+			boolean isvalid = validateProperties(datasource);
+			if (isvalid) {
+				GrafanaRestResponseWrapper<GrafanaRestSimpleResponseMessage> wrapper = new GrafanaRestResponseWrapper<GrafanaRestSimpleResponseMessage>(RESPONSE_OK_SUCCESS_CODE, Status.OK.getStatusCode(), null, new GrafanaRestSimpleResponseMessage(String.format("Got it")));
+				return wrapper;
+			} else {
+				throw new IOException("Error processing config file");
+			}
+		} catch (Exception e) {
+			GrafanaRestResponseWrapper<List<GrafanaRestQueryTimeserieResponse>> wrapper =  new GrafanaRestResponseWrapper<List<GrafanaRestQueryTimeserieResponse>>(RESPONSE_GENERAL_ERROR_CODE, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage(), null);
+			throw new WebApplicationRestServiceException(wrapper);
+		}
+	}
+	
+	@Path("/{datasourceId}/search")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public GrafanaRestResponseWrapper<List<String>> query(GrafanaRestSearchRequest query, @PathParam("datasourceId") int datasourceId) {
+		try {
+			YamlConfig config = getConfig();
+			String[] a = config.getDatasource().get(datasourceId).getVarIds().toArray(new String[config.getDatasource().get(datasourceId).getVarIds().size()]);
+			return new GrafanaRestResponseWrapper<List<String>>(RESPONSE_OK_SUCCESS_CODE, Status.OK.getStatusCode(), null, Arrays.asList(a));
+		} catch (Exception e) {
+			GrafanaRestResponseWrapper<List<GrafanaRestQueryTimeserieResponse>> wrapper =  new GrafanaRestResponseWrapper<List<GrafanaRestQueryTimeserieResponse>>(RESPONSE_GENERAL_ERROR_CODE, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage(), null);
+			throw new WebApplicationRestServiceException(wrapper);
+		}
+	}
+	
+	@Path("/{datasourceId}/query")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<GrafanaRestQueryTimeserieResponse> searchTimeSerie(GrafanaRestQueryRequest query, @PathParam("datasourceId") int datasourceId) {
+		try {
+			YamlConfig config = getConfig();
 			_log.info(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
 			System.out.println(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
 			System.out.println(String.format("Interval %s ms, maxDataPoints %s", query.getIntervalMs(), query.getMaxDataPoints()));
 			List<GrafanaRestQueryTimeserieResponse> responseList = new ArrayList<>();
 			if(null != query) {
 				for(GrafanaRestTarget target: query.getTargets()) {
-					GrafanaRestQueryTimeserieResponse response  = KafkaGrafanaUtil.buildQueryResponse(target, query.getRange(), query.getIntervalMs());
+					GrafanaRestQueryTimeserieResponse response  = KafkaGrafanaUtil.buildQueryResponse(target, query.getRange(), query.getIntervalMs(),config.getDatasource().get(datasourceId));
 					responseList.add(response);
 				}
 			}
