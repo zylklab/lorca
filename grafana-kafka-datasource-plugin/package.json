@@ -12,8 +12,8 @@
     "type": "git",
     "url": "git+https://github.com/zylklab/lorca.git"
   },
-  "author": "",
-  "license": "MIT",
+  "author": "zylklab",
+  "license": "AGPL",
   "bugs": {
     "url": "https://github.com/zylklab/lorca/issues"
   },
