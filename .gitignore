@@ -83,3 +83,5 @@ readme.txt
 .idea
 *.iml
 **/test-output
+yarn.lock
+**/yarn.lock
