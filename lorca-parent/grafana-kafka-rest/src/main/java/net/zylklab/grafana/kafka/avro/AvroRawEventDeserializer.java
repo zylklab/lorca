@@ -1,31 +1,36 @@
 package net.zylklab.grafana.kafka.avro;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.reflect.ReflectDatumReader;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.zylklab.grafana.kafka.avro.auto.EventRecord;
-
-public class AvroRawEventDeserializer implements Deserializer<EventRecord> {
+public class AvroRawEventDeserializer implements Deserializer<GenericRecord> {
 	private static final Logger _log = LoggerFactory.getLogger(AvroRawEventDeserializer.class);
 	private transient BinaryDecoder decoder;
-	private transient DatumReader<EventRecord> reader;
+	private transient DatumReader<GenericRecord> reader;
 	private boolean ignoreDeserializeExceptions= false;
+	public static String AVRO_SCHEMA_PROPERTY_NAME = "avro.topic.events.schema";
+	private static Schema SCHEMA;
+	
 
 	@Override
 	public void configure(Map<String, ?> configs, boolean isKey) {
-
+		configs.entrySet().stream().forEach(a -> _log.debug(String.format("Map key %s, value %s", a.getKey(),a.getValue())));
+		Entry<String, ?> schema = configs.entrySet().stream().filter(a -> a.getKey().equalsIgnoreCase(AVRO_SCHEMA_PROPERTY_NAME)).findAny().orElse(null);
+		SCHEMA = new org.apache.avro.Schema.Parser().parse((String)schema.getValue());
 	}
 
 	@Override
-	public EventRecord deserialize(String topic, byte[] data) {
+	public GenericRecord deserialize(String topic, byte[] data) {
 		// Deserialize record
 		ensureInitialized();
 		this.decoder = DecoderFactory.get().binaryDecoder(data, this.decoder);
@@ -48,12 +53,7 @@ public class AvroRawEventDeserializer implements Deserializer<EventRecord> {
 
 	private void ensureInitialized() {
 		if (this.reader == null) {
-			if (org.apache.avro.specific.SpecificRecordBase.class.isAssignableFrom(EventRecord.class)) {
-				this.reader = new SpecificDatumReader<EventRecord>(EventRecord.class);
-			} else {
-				this.reader = new ReflectDatumReader<EventRecord>(EventRecord.class);
-			}
+			this.reader = new GenericDatumReader<GenericRecord>(SCHEMA);
 		}
 	}
-
 }

@@ -10,13 +10,15 @@ kafka-datasources:
                      auto.offset.reset: "latest"
       topic-name: "ARCELOR-FLINK"
       topic-partitions-number: 2
-      avro-schema:
-      
+      avro-schema: "{\"type\": \"record\",\"namespace\": \"net.zylklab.grafana.kafka.avro.auto\",\"name\": \"EventRecord\",\"fields\":[{\"name\": \"id\",\"type\": [\"null\",\"int\"], \"default\": null},{\"name\": \"value\", \"type\": [\"null\",\"double\"], \"default\": null},{\"name\": \"timestamp\", \"type\": [\"null\",\"long\"], \"default\": null}]}"
       timestamp-field: "timestamp"
       value-field: "value"
+      id-field: "id"
       value-type: "double"
-      var-name-list: ["grosor","velocidad"]
-      var-id-list:   [1,2]
+      vars: [
+               {"key": 1, "value": "Grosor"},
+               {"key": 2, "value": "Aceleración"}
+            ]
       kafka-version: "2.0.0"
       
    1:
@@ -30,11 +32,16 @@ kafka-datasources:
                      auto.offset.reset: "latest"
       topic-name: "RAW-EVENT"
       topic-partitions-number: 2
-      avro-schema:
+      avro-schema: "{\"type\": \"record\",\"namespace\": \"net.zylklab.grafana.kafka.avro.auto\",\"name\": \"EventRecord\",\"fields\":[{\"name\": \"id\",\"type\": [\"null\",\"int\"], \"default\": null},{\"name\": \"value\", \"type\": [\"null\",\"double\"], \"default\": null},{\"name\": \"timestamp\", \"type\": [\"null\",\"long\"], \"default\": null}]}"
       
       timestamp-field: "timestamp"
       value-field: "value"
+      id-field: "id"
       value-type: "double"
-      var-name-list: ["grosor","velocidad","longitud","aceleración"]
-      var-id-list:   [1,2,3,4]
+      vars: [
+               {"key": 1, "value": "Grosor"},
+               {"key": 2, "value": "Aceleración"},
+               {"key": 3, "value": "Velocidad"},
+               {"key": 4, "value": "Longitud"}
+            ]
       kafka-version: "2.0.0"

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -95,13 +96,15 @@ public class KafkaGrafanaService {
 		}
 	}
 	
+	
+	
 	@Path("/{datasourceId}/search")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public GrafanaRestResponseWrapper<List<String>> query(GrafanaRestSearchRequest query, @PathParam("datasourceId") int datasourceId) {
 		try {
 			YamlConfig config = getConfig();
-			String[] a = config.getDatasource().get(datasourceId).getVarIds().toArray(new String[config.getDatasource().get(datasourceId).getVarIds().size()]);
+			String[] a = config.getDatasource().get(datasourceId).getVars().stream().map(element -> element.getValue()).collect(Collectors.toList()).toArray(new String[config.getDatasource().get(datasourceId).getVars().size()]);
 			return new GrafanaRestResponseWrapper<List<String>>(RESPONSE_OK_SUCCESS_CODE, Status.OK.getStatusCode(), null, Arrays.asList(a));
 		} catch (Exception e) {
 			GrafanaRestResponseWrapper<List<GrafanaRestQueryTimeserieResponse>> wrapper =  new GrafanaRestResponseWrapper<List<GrafanaRestQueryTimeserieResponse>>(RESPONSE_GENERAL_ERROR_CODE, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage(), null);
@@ -116,8 +119,6 @@ public class KafkaGrafanaService {
 		try {
 			YamlConfig config = getConfig();
 			_log.info(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
-			System.out.println(String.format("Initial date %s, end date %s", query.getRange().getFrom(), query.getRange().getTo()));
-			System.out.println(String.format("Interval %s ms, maxDataPoints %s", query.getIntervalMs(), query.getMaxDataPoints()));
 			List<GrafanaRestQueryTimeserieResponse> responseList = new ArrayList<>();
 			if(null != query) {
 				for(GrafanaRestTarget target: query.getTargets()) {

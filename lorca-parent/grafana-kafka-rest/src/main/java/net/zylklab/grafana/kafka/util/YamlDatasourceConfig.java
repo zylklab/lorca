@@ -19,12 +19,12 @@ public class YamlDatasourceConfig {
 	private String timestampField;
 	@JsonProperty("value-field")
 	private String valueField;
+	@JsonProperty("id-field")
+	private String idField;
 	@JsonProperty("value-type")
 	private String valueType;
-	@JsonProperty("var-name-list")
-	private List<String> varNames;
-	@JsonProperty("var-id-list")
-	private List<String> varIds;
+	@JsonProperty("vars")
+	private List<YamlVarConfig> vars;
 	@JsonProperty("kafka-version")
 	private String kafkaVersion;
 
@@ -88,20 +88,12 @@ public class YamlDatasourceConfig {
 		this.valueType = valueType;
 	}
 
-	public List<String> getVarNames() {
-		return varNames;
+	public List<YamlVarConfig> getVars() {
+		return vars;
 	}
 
-	public void setVarNames(List<String> varNames) {
-		this.varNames = varNames;
-	}
-
-	public List<String> getVarIds() {
-		return varIds;
-	}
-
-	public void setVarIds(List<String> varIds) {
-		this.varIds = varIds;
+	public void setVars(List<YamlVarConfig> vars) {
+		this.vars = vars;
 	}
 
 	public String getKafkaVersion() {
@@ -111,4 +103,14 @@ public class YamlDatasourceConfig {
 	public void setKafkaVersion(String kafkaVersion) {
 		this.kafkaVersion = kafkaVersion;
 	}
+
+	public String getIdField() {
+		return idField;
+	}
+
+	public void setIdField(String idField) {
+		this.idField = idField;
+	}
+	
+	
 }

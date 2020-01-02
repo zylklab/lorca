@@ -55,5 +55,8 @@ public class GrafanaRestResponseWrapper <T> {
 		this.data = data;
 	}
 	public String toSimpleJsonString(){
-		return String.format("{\"status\":%d,\"code\":%d,\"developerMessage\":\"%s\",\"data\":%s}", this.getStatus(), this.getCode(), this.getDeveloperMessage(), this.getData().toString());
+		if(this.getData() != null)
+			return String.format("{\"status\":%d,\"code\":%d,\"developerMessage\":\"%s\",\"data\":%s}", this.getStatus(), this.getCode(), this.getDeveloperMessage(), this.getData().toString());
+		else 
+			return String.format("{\"status\":%d,\"code\":%d,\"developerMessage\":\"%s\",\"data\":%s}", this.getStatus(), this.getCode(), this.getDeveloperMessage(), this.getData());
 	}}

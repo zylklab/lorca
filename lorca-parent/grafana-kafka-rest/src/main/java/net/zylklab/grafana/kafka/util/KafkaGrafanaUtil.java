@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
+import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -20,7 +21,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.TopicPartition;
 
-import net.zylklab.grafana.kafka.avro.auto.EventRecord;
+import net.zylklab.grafana.kafka.avro.AvroRawEventDeserializer;
 import net.zylklab.grafana.kafka.rest.pojo.request.GrafanaRestRange;
 import net.zylklab.grafana.kafka.rest.pojo.request.GrafanaRestTarget;
 import net.zylklab.grafana.kafka.rest.pojo.response.GrafanaRestQueryTimeserieResponse;
@@ -33,32 +34,22 @@ public class KafkaGrafanaUtil {
 			GRAFANA_SDF.setTimeZone(TimeZone.getTimeZone("GMT"));
 	};
 	private static final Duration POOL_DURATION = Duration.ofMillis(1000);
-	
-//	props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKERS);
-//	props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_CONFIG);
-//	props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-//	props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, AvroRawEventDeserializer.class.getName());
-//	props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS);
-//	props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-//	props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OFFSET_RESET_EARLIER);
-	private static Properties map2Properties(Map<String, String> map) {
+	private static Properties map2Properties(Map<String, String> map, String avroSchema) {
 		Properties properties = new Properties();
 	    for (Map.Entry<String, String> entry : map.entrySet()) {
 	        properties.put(entry.getKey(), entry.getValue());
 	    }
+	    //add avro schema to use with AvroRawEventDeserializer
+	    properties.put(AvroRawEventDeserializer.AVRO_SCHEMA_PROPERTY_NAME, avroSchema);
 	    return properties;
 	}
 	
 	//https://dzone.com/articles/kafka-producer-and-consumer-example
 	@SuppressWarnings("unchecked")
-	synchronized private static List<EventRecord> getRecords(long tsInitial, long tsFinal, Integer target, YamlDatasourceConfig datasource) {
-		System.out.println("Initial ms: "+tsInitial);
-		System.out.println("Final   ms: "+tsFinal);
-		System.out.println("Target  ms: "+target);
+	synchronized private static List<GenericRecord> getRecords(long tsInitial, long tsFinal, Integer target, YamlDatasourceConfig datasource) {
+		List<GenericRecord> result = new ArrayList<>();
 		
-		List<EventRecord> result = new ArrayList<>();
-		
-		try(Consumer<String, EventRecord> consumer = new KafkaConsumer<>(map2Properties(datasource.getKafkaNativeProperties()))) {
+		try(Consumer<String, GenericRecord> consumer = new KafkaConsumer<>(map2Properties(datasource.getKafkaNativeProperties(), datasource.getAvroSchema()))) {
 			//en vez de iniciar con hay que iniciar con consumer.assign para que se puede hacer un seek
 			//consumer.subscribe(Collections.singletonList(RAW_EVENTS_TOPIC_NAME));
 			List<TopicPartition> assigns = new ArrayList<>();
@@ -104,24 +95,22 @@ public class KafkaGrafanaUtil {
 			    		if(key != null && value != null) {
 			    			//hay que asignar las partición antes de hacer el seek
 			    			//https://stackoverflow.com/questions/41008610/kafkaconsumer-0-10-java-api-error-message-no-current-assignment-for-partition
-			    			System.out.println(String.format("Partition %s initial offset %s, initial ts ",key.partition() ,value.offset(), value.timestamp()));
 			    			consumer.seek(key, value.offset());
 			    		} else if(value == null) {
-			    			System.out.println(String.format("No se ha encontrado offset para la partición Partition %s ",key.partition()));
 			    			return result;
 			    		}
 			    	}
 			        flag = false;
 			    }
-			    ConsumerRecords<String, EventRecord> consumerRecords = consumer.poll(POOL_DURATION);
+			    ConsumerRecords<String, GenericRecord> consumerRecords = consumer.poll(POOL_DURATION);
 
-			    for (ConsumerRecord<String, EventRecord> record : consumerRecords) {
+			    for (ConsumerRecord<String, GenericRecord> record : consumerRecords) {
 			    	int partition = record.partition();
 			    	long offset = record.offset();
 			    	Long max = finalOffset.get(new TopicPartition(datasource.getTopicName(), partition)) - 1;
 			    	if(max != null && max > offset) {
-			    		EventRecord r = record.value();
-			    		if(r != null && r.getId() != null && r.getId().equals(target))
+			    		GenericRecord r = record.value();
+			    		if(r != null && r.get(datasource.getIdField()) != null && r.get(datasource.getIdField()).equals(target))
 			    			result.add(record.value());
 			    		counter[partition] = Boolean.FALSE;
 			    	} else {
@@ -150,9 +139,12 @@ public class KafkaGrafanaUtil {
 		long from = GRAFANA_SDF.parse(range.getFrom()).getTime();
 		long to = GRAFANA_SDF.parse(range.getTo()).getTime();
 		List<Object[]> datapoint = new ArrayList<Object[]>();
-		List<EventRecord> result = getRecords(from,to, Integer.parseInt(target.getTarget()), datasource);
-		for (EventRecord arcelorRecord : result) {
-			datapoint.add(buildDataFromAvro(arcelorRecord));	
+		
+		//target value to key
+		YamlVarConfig selectedTarget = datasource.getVars().stream().filter(var -> target.getTarget().equalsIgnoreCase(var.getValue())).findAny().orElse(null);
+		List<GenericRecord> result = getRecords(from,to, selectedTarget.getKey(), datasource);
+		for (GenericRecord arcelorRecord : result) {
+			datapoint.add(buildDataFromAvro(arcelorRecord, datasource));	
 		}
 		List<Object[]> datapointSorted = datapoint.stream().sorted(new Comparator<Object[]>() {
 			@Override
@@ -171,10 +163,10 @@ public class KafkaGrafanaUtil {
 		return datapointWithGap;
 	}
 
-	private static Object[] buildDataFromAvro(EventRecord record) {
+	private static Object[] buildDataFromAvro(GenericRecord record, YamlDatasourceConfig datasource) {
 		Object[] a = new Object[2];
-		a[0] = record.getValue();
-		a[1] = record.getTimestamp();
+		a[0] = record.get(datasource.getValueField());
+		a[1] = record.get(datasource.getTimestampField());
 		return a;
 	}
 
