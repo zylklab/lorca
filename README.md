@@ -89,6 +89,8 @@ sudo systemctl status grafana-server
     Kafka Brokers | kafka.broker01:6667, kafka.broker02:6667
     Topic Name | RAW-EVENT
 
+![](assets/README-cfc04ef6.png)
+
 ### 2. Configure REST api
 
 Open ```~/lorca-parent/grafana-kafka-rest/src/main/resources/lorca-kafka-rest.yaml``` file and configure properties.
@@ -143,6 +145,8 @@ Download and install Grafana from https://grafana.com/docs/grafana/latest/instal
 
   -> ```Save & Test```.
 
+  ![](assets/README-6eb500c4.png)
+
  * Add new dashboard:
 
   Left-side panel -> ```Create``` -> ```Dashboard```.
@@ -150,4 +154,8 @@ Download and install Grafana from https://grafana.com/docs/grafana/latest/instal
 
   Select desired variable to plot in ```select metric``` drop-down list. Available options are specified in the REST configuration ```lorca-kafka-rest.yaml``` file in ```vars``` field. Each variable is mapped with the ```id``` field from the raw event.
 
+  ![](assets/README-db341e8c.png)
+
   Finally, in the top right corner it is possible to select the desired time range to be plotted.
+
+  ![](assets/README-34c0e49d.png)
