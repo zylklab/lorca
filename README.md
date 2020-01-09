@@ -34,7 +34,7 @@ The REST base endpoint is http://server-name/grafana-kafka-rest/api/v1/1.
 Link the plugin with grafana:
 
 ```bash
-sudo ln -s /home/gus/git/lorca/kafka-datasource-plugin /var/lib/grafana/plugins/kafka-datasource-plugin
+sudo ln -s ~/git/lorca/kafka-datasource-plugin /var/lib/grafana/plugins/kafka-datasource-plugin
 ```
 
 Then restart grafana:
