@@ -40,7 +40,7 @@ sudo ln -s ~/git/lorca/kafka-datasource-plugin /var/lib/grafana/plugins/kafka-da
 Then restart grafana:
 
 ```bash
-sudo systemctl status grafana-server
+sudo systemctl restart grafana-server
 ```
 
 ## Test Example
