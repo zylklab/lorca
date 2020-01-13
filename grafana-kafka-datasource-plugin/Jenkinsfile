@@ -1,0 +1,33 @@
+node {
+   properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(), pipelineTriggers([])])
+   def mvnHome
+   def pom
+   def version
+   def groupId = "net.zylklab.bigdata"
+   def artifactId = "grafana-kafka-plugin"
+   
+   // Mark the code checkout 'stage'....
+   stage ('Preparation'){
+	checkout scm
+	echo "git clone ...."
+	mvnHome = tool 'apache-maven-3.3.9-automatic'
+	repoURL = "https://services.zylk.net/nexus/content/repositories/bigdata-releases/"
+	repoId = "bigdata-releases-zylk"
+   }
+   if (env.BRANCH_NAME == "master") {
+	   stage ('Prepare Release') {
+//		   echo "Yarn es una puta mierda de herramienta y hay que especificar con un alias la version de node ...he cambiado a mano /usr/bin/yarnpkg para que coja nodejs que es la version 8 porque la 10 da un error en ssas"
+//		   sh "/usr/bin/npm install --save-dev webpack"
+//		   sh "/usr/bin/yarnpkg install"
+//		   sh "/usr/bin/yarnpkg build"
+		   sh "/usr/bin/yarn install"
+		   sh "/usr/bin/yarn build"
+		   sh "/bin/tar -cvzf grafana-kafka-datasource-plugin-1.0.'${currentBuild.number}'.tar.gz dist/"
+		   echo "tar gz creado"
+	   }
+   }
+   stage('Publish Release') {
+	echo "'${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz"
+	sh "'${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz"
+   }
+}
