@@ -22,7 +22,7 @@ node {
    if (env.BRANCH_NAME == "master") {
 	   stage ('Release zylk') {
 		   echo "release version::"+version+" repository url::https://services.zylk.net/nexus/content/repositories/bigdata-releases/"
-		   sh "'${mvnHome}/bin/mvn' --file pom.xml -P zylk -DtagNameFormat=@{project.artifactId}-@{project.version}-zylk -Dmaven.test.failure.ignore -DreleaseVersion=${version} -DdevelopmentVersion=${pom.version} -DpushChanges=false -DlocalCheckout=true -DpreparationGoals=initialize release:prepare release:perform -B"
+		   sh "cd lorca-parent && '${mvnHome}/bin/mvn' --file pom.xml -P zylk -DtagNameFormat=@{project.artifactId}-@{project.version}-zylk -Dmaven.test.failure.ignore -DreleaseVersion=${version} -DdevelopmentVersion=${pom.version} -DpushChanges=false -DlocalCheckout=true -DpreparationGoals=initialize release:prepare release:perform -B"
 	   }
    }
    stage('Results') {

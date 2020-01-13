@@ -5,6 +5,7 @@ node {
    def version
    def groupId = "net.zylklab.bigdata"
    def artifactId = "grafana-kafka-plugin"
+   def subProyectName = "grafana-kafka-datasource-plugin"
    
    // Mark the code checkout 'stage'....
    stage ('Preparation'){
@@ -20,15 +21,15 @@ node {
 //		   sh "/usr/bin/npm install --save-dev webpack"
 //		   sh "/usr/bin/yarnpkg install"
 //		   sh "/usr/bin/yarnpkg build"
-		   sh "cd ./grafana-kafka-datasource-plugin"
-		   sh "/usr/bin/yarn install"
-		   sh "/usr/bin/yarn build"
-		   sh "/bin/tar -cvzf grafana-kafka-datasource-plugin-1.0.'${currentBuild.number}'.tar.gz dist/"
+		   sh "cd '${subProyectName}'"
+		   sh "(cd '${subProyectName}' && /usr/bin/yarn install)"
+		   sh "(cd '${subProyectName}' && /usr/bin/yarn build)"
+		   sh "(cd '${subProyectName}' && /bin/tar -cvzf grafana-kafka-datasource-plugin-1.0.'${currentBuild.number}'.tar.gz dist/)"
 		   echo "tar gz creado"
 	   }
    }
    stage('Publish Release') {
 	echo "'${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz"
-	sh "'${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz"
+	sh "cd '${subProyectName}' && '${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz"
    }
 }
