@@ -10,7 +10,7 @@ node {
         mvnHome = tool 'apache-maven-3.3.9-automatic'
         echo "git clone ...."
         
-        pom = readMavenPom file: 'pom.xml'
+        pom = readMavenPom file: './lorca-parent/pom.xml'
         echo "pom(s) used...."
         echo pom.name+"::"+pom.version
         

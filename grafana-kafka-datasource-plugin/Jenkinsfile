@@ -20,6 +20,7 @@ node {
 //		   sh "/usr/bin/npm install --save-dev webpack"
 //		   sh "/usr/bin/yarnpkg install"
 //		   sh "/usr/bin/yarnpkg build"
+		   sh "cd ./grafana-kafka-datasource-plugin"
 		   sh "/usr/bin/yarn install"
 		   sh "/usr/bin/yarn build"
 		   sh "/bin/tar -cvzf grafana-kafka-datasource-plugin-1.0.'${currentBuild.number}'.tar.gz dist/"
