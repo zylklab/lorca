@@ -21,7 +21,6 @@ node {
 //		   sh "/usr/bin/npm install --save-dev webpack"
 //		   sh "/usr/bin/yarnpkg install"
 //		   sh "/usr/bin/yarnpkg build"
-		   sh "cd '${subProyectName}'"
 		   sh "(cd '${subProyectName}' && /usr/bin/yarn install)"
 		   sh "(cd '${subProyectName}' && /usr/bin/yarn build)"
 		   sh "(cd '${subProyectName}' && /bin/tar -cvzf grafana-kafka-datasource-plugin-1.0.'${currentBuild.number}'.tar.gz dist/)"
@@ -30,6 +29,6 @@ node {
    }
    stage('Publish Release') {
 	echo "'${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz"
-	sh "cd '${subProyectName}' && '${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz"
+	sh "(cd '${subProyectName}' && '${mvnHome}'/bin/mvn deploy:deploy-file -Durl='${repoURL}' -DrepositoryId='${repoId}' -DgroupId='${groupId}' -DartifactId='${artifactId}' -Dversion='1.0.${currentBuild.number}'  -Dpackaging=tar.gz -Dfile=grafana-kafka-datasource-plugin-'1.0.${currentBuild.number}'.tar.gz)"
    }
 }
