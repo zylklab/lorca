@@ -17,10 +17,6 @@ node {
    }
    if (env.BRANCH_NAME == "master") {
 	   stage ('Prepare Release') {
-//		   echo "Yarn es una puta mierda de herramienta y hay que especificar con un alias la version de node ...he cambiado a mano /usr/bin/yarnpkg para que coja nodejs que es la version 8 porque la 10 da un error en ssas"
-//		   sh "/usr/bin/npm install --save-dev webpack"
-//		   sh "/usr/bin/yarnpkg install"
-//		   sh "/usr/bin/yarnpkg build"
 		   sh "(cd '${subProyectName}' && /usr/bin/yarn install)"
 		   sh "(cd '${subProyectName}' && /usr/bin/yarn build)"
 		   sh "(cd '${subProyectName}' && /bin/tar -cvzf grafana-kafka-datasource-plugin-1.0.'${currentBuild.number}'.tar.gz dist/)"

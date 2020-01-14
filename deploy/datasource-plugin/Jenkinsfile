@@ -1,0 +1,48 @@
+node {
+   def host_name = sh (returnStdout: true, script:"hostname -f").trim()
+   if(host_name.endsWith("zylk.net")) {
+       properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(), 
+       	   parameters([ string(defaultValue: 'ZYLK', description: 'Deploy Environment (ZYLK)', name: 'environment'),
+       	   				string(defaultValue: 'grafana-kafka-plugin', description: 'Plugin module artifact id (datasource-plugin)', name: 'plugin_artifact_id'), 
+       	   				string(defaultValue: '1.0.1', description: 'Plugin module Version', name: 'plugin_version')]), pipelineTriggers([])])
+   }
+   
+   def plugin_group_id = "net.zylklab.bigdata"
+   def plugin_group_id_path = "net/zylklab/bigdata"
+   def plugin_type = "tar.gz"
+   def plugin_repository_url
+   def deploy_remote_path
+   def grafana_deploy_server
+   def grafana_deploy_credentials
+   def grafana_deploy_user
+   def nexus_read_credentials = "nexus-read-user"
+   
+   if (environment == 'ZYLK') {
+      plugin_repository_url = "https://services.zylk.net/nexus/content/repositories/bigdata-releases"
+	  deploy_remote_host = "amaterasu000.bigdata.zylk.net"
+	  deploy_remote_path=" /var/lib/grafana/plugins"
+	  grafana_deploy_credentials="zylk-ssh-deploy"
+	  grafana_deploy_user = "grafana"
+   }
+   if (env.BRANCH_NAME == "master") {
+	   stage ('Get artifact') {
+		   withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+		   		echo "curl --fail -L ${plugin_repository_url}/${plugin_group_id_path}/${plugin_artifact_id}/${plugin_version}/${plugin_artifact_id}-${plugin_version}.${plugin_type}"
+		   		sh "curl -u '${USERPASS}' --fail -L '${plugin_repository_url}/${plugin_group_id_path}/${plugin_artifact_id}/${plugin_version}/${plugin_artifact_id}-${plugin_version}.${plugin_type}' -o ${plugin_artifact_id}-${plugin_version}.${plugin_type}"
+		   	}
+	   }
+	   stage ('Move artifact to deploy zone') {
+		   sshagent (credentials: ["${grafana_deploy_credentials}"]) {
+		   		echo "copy artifact ./${plugin_artifact_id}-${plugin_version}.${plugin_type} to ${grafana_deploy_user}@${deploy_remote_host}:${deploy_remote_path}/${plugin_artifact_id}.${plugin_type}"
+		   		sh "scp ./${plugin_artifact_id}-${plugin_version}.${plugin_type} ${grafana_deploy_user}@${deploy_remote_host}:${deploy_remote_path}/${plugin_artifact_id}.${plugin_type}"
+		   }
+	   }
+	   
+	   stage ('unzip the content') {
+		   sshagent (credentials: ["${grafana_deploy_credentials}"]) {
+				sh "ssh -o StrictHostKeyChecking=no -l ${grafana_deploy_user} ${deploy_remote_host} tar -xvzf ${deploy_remote_path}/${plugin_artifact_id}.${plugin_type} --directory ${deploy_remote_path}/ --strip-components=1" 
+		   }
+	   }
+   }
+  
+}
