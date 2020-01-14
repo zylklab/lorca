@@ -21,7 +21,7 @@ node {
 	   rest_repository_url = "https://services.zylk.net/nexus/content/repositories/bigdata-releases"
 	   deploy_remote_host = "amaterasu004.bigdata.zylk.net"
 	   tomcat_remote_path="/opt/tomcat/latest/"
-	   tomcat_deploy_credentials="zylk-ssh-deploy"
+	   tomcat_deploy_credentials="grafana-amaterasu"
 	   tomcat_deploy_user = "tomcat"
    }
    if (env.BRANCH_NAME == "master") {
