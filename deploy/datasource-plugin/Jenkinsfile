@@ -34,7 +34,7 @@ node {
 	   stage ('Move artifact to deploy zone') {
 		   sshagent (credentials: ["${grafana_deploy_credentials}"]) {
 		   		echo "copy artifact ./${plugin_artifact_id}-${plugin_version}.${plugin_type} to ${grafana_deploy_user}@${deploy_remote_host}:${deploy_remote_path}/${plugin_artifact_id}.${plugin_type}"
-		   		sh "scp ./${plugin_artifact_id}-${plugin_version}.${plugin_type} ${grafana_deploy_user}@${deploy_remote_host}:${deploy_remote_path}/${plugin_artifact_id}.${plugin_type}"
+		   		sh "scp -o StrictHostKeyChecking=no ./${plugin_artifact_id}-${plugin_version}.${plugin_type} ${grafana_deploy_user}@${deploy_remote_host}:${deploy_remote_path}/${plugin_artifact_id}.${plugin_type}"
 		   }
 	   }
 	   

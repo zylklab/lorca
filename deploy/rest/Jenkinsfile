@@ -4,7 +4,7 @@ node {
         properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(), 
            parameters([ string(defaultValue: 'ZYLK', description: 'Deploy Environment (ZYLK)', name: 'environment'),
            				string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'), 
-           				string(defaultValue: '1.0.1', description: 'Rest module Version', name: 'rest_version')]), pipelineTriggers([])])
+           				string(defaultValue: '0.0.1.6', description: 'Rest module Version', name: 'rest_version')]), pipelineTriggers([])])
    }
    
    def rest_group_id = "net.zylklab.bigdata"
@@ -20,7 +20,7 @@ node {
    if (environment == 'ZYLK') {
 	   rest_repository_url = "https://services.zylk.net/nexus/content/repositories/bigdata-releases"
 	   deploy_remote_host = "amaterasu004.bigdata.zylk.net"
-	   tomcat_remote_path="/opt/tomcat/latest/"
+	   tomcat_remote_path="/opt/tomcat/latest"
 	   tomcat_deploy_credentials="grafana-amaterasu"
 	   tomcat_deploy_user = "tomcat"
    }
@@ -34,7 +34,7 @@ node {
 	   stage ('Move artifact to deploy zone') {
 		   sshagent (credentials: ["${tomcat_deploy_credentials}"]) {
 		      echo "copy artifact ./${rest_artifact_id}-${rest_version}.${rest_type} to ${tomcat_deploy_user}@${deploy_remote_host}:${tomcat_remote_path}/webapps/${rest_artifact_id}.${rest_type}"
-			  sh "scp ./${rest_artifact_id}-${rest_version}.${rest_type} ${tomcat_deploy_user}@${deploy_remote_host}:${tomcat_remote_path}/webapps/${rest_artifact_id}.${rest_type}"
+			  sh "scp -o StrictHostKeyChecking=no ./${rest_artifact_id}-${rest_version}.${rest_type} ${tomcat_deploy_user}@${deploy_remote_host}:${tomcat_remote_path}/webapps/${rest_artifact_id}.${rest_type}"
 		   }
 	   }
 	   
