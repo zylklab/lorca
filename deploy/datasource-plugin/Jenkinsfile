@@ -20,7 +20,7 @@ node {
    if (environment == 'ZYLK') {
       plugin_repository_url = "https://services.zylk.net/nexus/content/repositories/bigdata-releases"
 	  deploy_remote_host = "amaterasu000.bigdata.zylk.net"
-	  deploy_remote_path=" /var/lib/grafana/plugins"
+	  deploy_remote_path= "/var/lib/grafana/plugins"
 	  grafana_deploy_credentials="zylk-ssh-deploy"
 	  grafana_deploy_user = "grafana"
    }
