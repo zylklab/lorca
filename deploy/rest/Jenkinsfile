@@ -16,7 +16,11 @@ node {
 //			versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}'")
 			versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
 			//versions.split().reverse().sublist(0,5).join("\n")
+			echo "${versions}"
+			echo versions.class
 			versions = versions.split()
+			echo versions[ 0 ].class
+			
 			tmp_versions = []
 			for (v in versions) {
 				tmp_versions.add(0, v)
