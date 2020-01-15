@@ -9,19 +9,17 @@ node {
 		def rest_repository_url = "https://services.zylk.net/nexus/content/repositories/${repository_id}"
 		def nexus_read_credentials = "nexus-read-user"
 		def versions
-		def global_USERPASS
 		
 		withCredentials([ usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 			global_USERPASS = "${USERPASS}"
-//			echo "curl versions"
-//			versions = sh(returnStdout: true, script: "curl -X GET -u ${USERPASS} 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g").trim()
-//			echo "${versions}"
+			echo "curl versions"
+			versions = sh(returnStdout: true, script: "curl -X GET -u ${USERPASS} 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g").trim()
+			echo "${versions}"
 		}
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
 		parameters([ string(defaultValue: 'ZYLK', description: 'Deploy Environment (ZYLK)', name: 'environment'),
 						string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
-						choice(choices: sh(returnStdout: true, script: "curl -X GET -u ${global_USERPASS} 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g").trim(),
-						 description: 'Rest module Version', name: 'rest_version')]),
+						choice(choices: "one\ntwo", description: 'Rest module Version', name: 'rest_version')]),
 //						choice(choices: "one\ntwo", description: 'Rest module Version', name: 'rest_version')]),
 						//string(defaultValue: '0.0.1.6', description: 'Rest module Version', name: 'rest_version')]),
 						pipelineTriggers([])])
