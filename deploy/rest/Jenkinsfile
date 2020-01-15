@@ -6,10 +6,10 @@ node {
 	def artifact_type = "war"
 	def rest_repository_url = "https://services.zylk.net/nexus/content/repositories/${repository_id}"
 	def nexus_read_credentials = "nexus-read-user"
+	
 	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
 	if(host_name.endsWith("zylk.net")) {
 		def versions
-		
 		withCredentials([ usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 			global_USERPASS = "${USERPASS}"
 			echo "curl versions"
@@ -20,6 +20,9 @@ node {
 			tmp_versions = versions.clone()
 			for (i = 0; i < versions.size(); i++) {
 				tmp_versions[-1-i] = versions[i]
+			}
+			while (tmp_versions.size() > 5) {
+				tmp_versions.remove(tmp_versions.size()-1)
 			}
 			versions = tmp_versions.join("\n")
 			echo "${versions}"
