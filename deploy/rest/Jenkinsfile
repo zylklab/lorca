@@ -18,7 +18,7 @@ node {
 			//versions.split().reverse().sublist(0,5).join("\n")
 			versions = versions.split().drop(versions.size()-5) // keep last 5 versions
 			tmp = versions.clone()
-			for (i = 0; i < versions.size(); i++;) {
+			for (i = 0; i < versions.size(); i++) {
 				tmp[versions.size()-1-i] = versions[i]
 			}
 			versions = tmp
