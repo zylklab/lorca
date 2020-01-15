@@ -16,12 +16,12 @@ node {
 //			versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}'")
 			versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
 			//versions.split().reverse().sublist(0,5).join("\n")
-			versions = versions.split().drop(versions.size()-5) // keep last 5 versions
-			tmp = versions.clone()
-			for (i = 0; i < versions.size(); i++) {
-				tmp[versions.size()-1-i] = versions[i]
-			}
-			versions = tmp
+			versions = versions.split().sort()
+//			tmp = versions.clone()
+//			for (i = versions.size()-5; i < versions.size(); i++) {
+//				tmp[versions.size()-1-i] = versions[i]
+//			}
+//			versions = tmp
 			echo "${versions}"
 		}
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
