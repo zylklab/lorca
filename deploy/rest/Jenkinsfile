@@ -15,12 +15,13 @@ node {
 			echo "curl versions"
 //			versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}'")
 			versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
+			versions.split().reverse().sublist(0,5).join("\n")
 			echo "${versions}"
 		}
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
 		parameters([ string(defaultValue: 'ZYLK', description: 'Deploy Environment (ZYLK)', name: 'environment'),
 						string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
-						choice(choices: "${versions}", description: 'Rest module Version', name: 'rest_version')]),
+						choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
 //						choice(choices: "one\ntwo", description: 'Rest module Version', name: 'rest_version')]),
 						//string(defaultValue: '0.0.1.6', description: 'Rest module Version', name: 'rest_version')]),
 						pipelineTriggers([])])
@@ -32,6 +33,13 @@ node {
 	
 	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
 		stage ('Get artifact') {
+			if ("${rest_version}" == "Latest") {
+				withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+					echo "curl latest version"
+					rest_version = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/latestRelease/ !d' | head -1 | sed 's:<latestRelease>\\|</latestRelease>::g'")
+					echo "latest version: ${rest_version}"
+				}
+			}
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 				echo "curl --fail -L ${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}"
 				sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${rest_artifact_id}-${rest_version}.${artifact_type}"
