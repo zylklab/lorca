@@ -21,11 +21,11 @@ node {
 			versions = versions.split()
 			echo versions[ 0 ].class
 			
-			tmp_versions = []
-			for (v in versions) {
-				tmp_versions.add(0, v)
-			}
-			versions = tmp_versions
+//			tmp_versions = []
+//			for (v in versions) {
+//				tmp_versions.add(0, v)
+//			}
+//			versions = tmp_versions
 			echo "${versions}"
 		}
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
