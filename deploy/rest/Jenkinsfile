@@ -21,7 +21,8 @@ node {
 			for (i = 0; i < versions.size(); i++) {
 				tmp_versions[-1-i] = versions[i]
 			}
-			versions = tmp_versions
+			echo tmp_versions
+			versions = tmp_versions.join("\n")
 			echo "${versions}"
 		}
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
