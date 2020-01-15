@@ -13,7 +13,7 @@ node {
 		withCredentials([ usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 			global_USERPASS = "${USERPASS}"
 			echo "curl versions"
-			versions = sh(returnStdout: true, script: "curl -s -X GET -u '${USERPASS}' --fail -L \\'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}\\'")
+			versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L \'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}\'")
 //			versions = sh(returnStdout: true, script: "curl -s -X GET -u '${USERPASS}' --fail -L \"https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}\" | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
 			echo "${versions}"
 		}
