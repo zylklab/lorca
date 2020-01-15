@@ -1,51 +1,52 @@
 node {
-   def host_name = sh (returnStdout: true, script:"hostname -f").trim()
-   if(host_name.endsWith("zylk.net")) {
-        properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(), 
-           parameters([ string(defaultValue: 'ZYLK', description: 'Deploy Environment (ZYLK)', name: 'environment'),
-           				string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'), 
-           				string(defaultValue: '0.0.1.6', description: 'Rest module Version', name: 'rest_version')]), pipelineTriggers([])])
-   }
-   
-   def rest_group_id = "net.zylklab.bigdata"
-   def rest_group_id_path = "net/zylklab/bigdata"
-   def rest_type = "war"
-   def rest_repository_url
-   def tomcat_remote_path
-   def tomcat_deploy_server
-   def tomcat_deploy_credentials
-   def tomcat_deploy_user
-   def nexus_read_credentials = "nexus-read-user"
-   
-   if (environment == 'ZYLK') {
-	   rest_repository_url = "https://services.zylk.net/nexus/content/repositories/bigdata-releases"
-	   deploy_remote_host = "amaterasu004.bigdata.zylk.net"
-	   tomcat_remote_path="/opt/tomcat/latest"
-	   tomcat_deploy_credentials="grafana-amaterasu"
-	   tomcat_deploy_user = "tomcat"
-   }
-   if (env.BRANCH_NAME == "master") {
-	   stage ('Get artifact') {
-	   	   withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
-		   	echo "curl --fail -L ${rest_repository_url}/${rest_group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${rest_type}"
-		   	sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${rest_group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${rest_type}' -o ${rest_artifact_id}-${rest_version}.${rest_type}"
-		   }
-	   }
-	   stage ('Move artifact to deploy zone') {
-		   sshagent (credentials: ["${tomcat_deploy_credentials}"]) {
-		      echo "copy artifact ./${rest_artifact_id}-${rest_version}.${rest_type} to ${tomcat_deploy_user}@${deploy_remote_host}:${tomcat_remote_path}/webapps/${rest_artifact_id}.${rest_type}"
-			  sh "scp -o StrictHostKeyChecking=no ./${rest_artifact_id}-${rest_version}.${rest_type} ${tomcat_deploy_user}@${deploy_remote_host}:${tomcat_remote_path}/webapps/${rest_artifact_id}.${rest_type}"
-		   }
-	   }
-	   
-	   stage ('Restart the container (thread force)') {
-		   sshagent (credentials: ["${tomcat_deploy_credentials}"]) {
-			   echo "killing tomcat process at lug151.zylk.net ${tomcat_remote_path}/bin/shutdown-force.sh"
-			   sh "ssh -o StrictHostKeyChecking=no -l ${tomcat_deploy_user} ${deploy_remote_host} ${tomcat_remote_path}/bin/shutdown.sh"
-			   echo "starting at lug151.zylk.net ${tomcat_remote_path}/bin/startup.sh"
-			   sh "ssh -o StrictHostKeyChecking=no -l ${tomcat_deploy_user} ${deploy_remote_host} ${tomcat_remote_path}/bin/startup.sh" 
-		   }
-	   }
-   }
-  
+	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
+	if(host_name.endsWith("zylk.net")) {
+		def repository_id = "bigdata-releases"
+		def group_id = "net.zylklab.bigdata"
+		def group_id_path = "net/zylklab/bigdata"
+		def artifact_id = "grafana-kafka-rest"
+		def artifact_type = "war"
+		def rest_repository_url = "https://services.zylk.net/nexus/content/repositories/${repository_id}"
+		def nexus_read_credentials = "nexus-read-user"
+		def versions
+		
+		withCredentials([ usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+			versions = sh(returnStdout: true, script: "curl https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id} | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g")
+			echo "${versions}"
+		}
+		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
+		parameters([ string(defaultValue: 'ZYLK', description: 'Deploy Environment (ZYLK)', name: 'environment'),
+						string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
+						choice(choices: versions, description: 'Rest module Version', name: 'rest_version')]),
+						//string(defaultValue: '0.0.1.6', description: 'Rest module Version', name: 'rest_version')]),
+						pipelineTriggers([])])
+	}
+	def deploy_remote_host = "amaterasu004.bigdata.zylk.net"
+	def tomcat_remote_path="/opt/tomcat/latest"
+	def tomcat_deploy_credentials="grafana-amaterasu"
+	def tomcat_deploy_user = "tomcat"
+	
+	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
+		stage ('Get artifact') {
+			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+				echo "curl --fail -L ${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}"
+				sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${rest_artifact_id}-${rest_version}.${artifact_type}"
+			}
+		}
+		stage ('Move artifact to deploy zone') {
+			sshagent (credentials: ["${tomcat_deploy_credentials}"]) {
+				echo "copy artifact ./${rest_artifact_id}-${rest_version}.${artifact_type} to ${tomcat_deploy_user}@${deploy_remote_host}:${tomcat_remote_path}/webapps/${rest_artifact_id}.${artifact_type}"
+				sh "scp -o StrictHostKeyChecking=no ./${rest_artifact_id}-${rest_version}.${artifact_type} ${tomcat_deploy_user}@${deploy_remote_host}:${tomcat_remote_path}/webapps/${rest_artifact_id}.${artifact_type}"
+			}
+		}
+		
+		stage ('Restart the container (thread force)') {
+			sshagent (credentials: ["${tomcat_deploy_credentials}"]) {
+				echo "killing tomcat process at lug151.zylk.net ${tomcat_remote_path}/bin/shutdown-force.sh"
+				sh "ssh -o StrictHostKeyChecking=no -l ${tomcat_deploy_user} ${deploy_remote_host} ${tomcat_remote_path}/bin/shutdown.sh"
+				echo "starting at lug151.zylk.net ${tomcat_remote_path}/bin/startup.sh"
+				sh "ssh -o StrictHostKeyChecking=no -l ${tomcat_deploy_user} ${deploy_remote_host} ${tomcat_remote_path}/bin/startup.sh" 
+			}
+		}
+	}
 }
