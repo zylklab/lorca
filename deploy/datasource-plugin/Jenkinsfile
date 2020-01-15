@@ -31,7 +31,7 @@ node {
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(), 
 			parameters([ string(defaultValue: 'ZYLK', description: 'Deploy Environment (ZYLK)', name: 'environment'),
 						string(defaultValue: 'grafana-kafka-plugin', description: 'Plugin module artifact id (datasource-plugin)', name: 'plugin_artifact_id'), 
-						choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
+						choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'plugin_version')]),
 						pipelineTriggers([])])
 	}
 	
