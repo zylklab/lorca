@@ -1,14 +1,13 @@
 node {
+	def repository_id = "bigdata-releases"
+	def group_id = "net.zylklab.bigdata"
+	def group_id_path = "net/zylklab/bigdata"
+	def artifact_id = "grafana-kafka-rest"
+	def artifact_type = "war"
+	def rest_repository_url = "https://services.zylk.net/nexus/content/repositories/${repository_id}"
+	def nexus_read_credentials = "nexus-read-user"
 	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
-	def nexus_read_credentials
 	if(host_name.endsWith("zylk.net")) {
-		def repository_id = "bigdata-releases"
-		def group_id = "net.zylklab.bigdata"
-		def group_id_path = "net/zylklab/bigdata"
-		def artifact_id = "grafana-kafka-rest"
-		def artifact_type = "war"
-		def rest_repository_url = "https://services.zylk.net/nexus/content/repositories/${repository_id}"
-		nexus_read_credentials = "nexus-read-user"
 		def versions
 		
 		withCredentials([ usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
