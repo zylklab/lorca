@@ -21,7 +21,6 @@ node {
 			for (i = 0; i < versions.size(); i++) {
 				tmp_versions[-1-i] = versions[i]
 			}
-			echo tmp_versions
 			versions = tmp_versions.join("\n")
 			echo "${versions}"
 		}
