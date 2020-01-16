@@ -70,12 +70,8 @@ node {
 		
 		stage ('Restart the container (thread force)') {
 			sshagent (credentials: ["${tomcat_deploy_credentials}"]) {
-				echo "restarting tomcat.service at amaterasu004.bigdata.zylk.net"
-				sh "ssh tomcat@amaterasu004.bigdata.zylk.net sudo systemctl restart tomcat.service"
-				//echo "killing tomcat process at amaterasu004.bigdata.zylk.net ${tomcat_remote_path}/bin/shutdown-force.sh"
-				//sh "ssh -o StrictHostKeyChecking=no -l ${tomcat_deploy_user} ${deploy_remote_host} ${tomcat_remote_path}/bin/shutdown.sh"
-				//echo "starting at amaterasu004.bigdata.zylk.net ${tomcat_remote_path}/bin/startup.sh"
-				//sh "ssh -o StrictHostKeyChecking=no -l ${tomcat_deploy_user} ${deploy_remote_host} ${tomcat_remote_path}/bin/startup.sh" 
+				echo "restarting tomcat.service at ${deploy_remote_host}"
+				sh "ssh ${tomcat_deploy_user}@${deploy_remote_host} sudo systemctl restart tomcat.service"
 			}
 		}
 	}
