@@ -42,7 +42,7 @@ node {
 	
 	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
 		stage ('Get artifact') {
-			checkout scm
+//			checkout scm
 			if ("${rest_version}" == "Latest") {
 				withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 					echo "curl latest version"
