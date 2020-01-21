@@ -8,9 +8,12 @@ node {
 	def rest_repository_url = "${nexus_url}/content/repositories/${repository_id}"
 	def nexus_read_credentials = "nexus-read-user"
 	
+	def versions
+	def artifact_versions
+	def latest_version
+	
 	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
 	if(host_name.endsWith("zylk.net")) {
-		def versions
 		withCredentials([ usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 			global_USERPASS = "${USERPASS}"
 			echo "curl versions"
@@ -31,7 +34,7 @@ node {
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
 		parameters([ 	string(defaultValue: 'ZYLK', description: 'Release environment', name: 'environment'),
 						string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
-						choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
+						choice(choices: "Latest\n${artifact_versions}", description: 'Rest module Version', name: 'rest_version')]),
 						pipelineTriggers([])])
 	}
 	
@@ -41,22 +44,40 @@ node {
 	def tomcat_deploy_user
 	
 	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
-		stage ('Get artifact') {
-//			checkout scm
-			if ("${rest_version}" == "Latest") {
-				withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
-					echo "curl latest version"
-					rest_version = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/latestRelease/ !d' | head -1 | sed 's:<latestRelease>\\|</latestRelease>::g'").trim()
-					echo "latest version: ${rest_version}"
-				}
+		stage ('Prepare') {
+			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+				echo "curl versions"
+				versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | grep -e \\<version\\> -e \\<latestRelease\\>")
 			}
+			
+			if ("${rest_version}" == "Latest") {
+				echo "check latest version"
+				rest_version = sh(returnStdout: true, script: "${versions} | sed -e '/latestRelease/ !d' | head -1 | sed 's:<latestRelease>\\|</latestRelease>::g'").trim()
+				echo "latest version: ${rest_version}"
+			}
+			
+			versions = sh(returnStdout: true, script: "${versions} | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
+			// long version of: versions.split().reverse().sublist(0,10).join("\n")
+			versions = versions.split()
+			tmp_versions = versions.clone()
+			for (i = 0; i < versions.size(); i++) {
+				tmp_versions[-1-i] = versions[i]
+			}
+			while (tmp_versions.size() > 10) {
+				tmp_versions.remove(tmp_versions.size()-1)
+			}
+			versions = tmp_versions.join("\n")
+			echo "artifact versions: \n${versions}"
+		}
+		
+		stage ('Get artifact') {			
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 				echo "curl --fail -L ${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}"
 				sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${rest_artifact_id}-${rest_version}.${artifact_type}"
 			}
 		}
 
-		stage ('Release docker image') {
+		stage ('Build docker image') {
 			sh "docker -v"
 			echo "build docker image from Dockerfile"
 			sh "pwd; ls"
