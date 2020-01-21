@@ -42,6 +42,7 @@ node {
 	
 	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
 		stage ('Get artifact') {
+			checkout scm
 			if ("${rest_version}" == "Latest") {
 				withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 					echo "curl latest version"
@@ -59,7 +60,7 @@ node {
 			sh "docker -v"
 			echo "build docker image from Dockerfile"
 			sh "pwd"
-			def dockImage = docker.build("tomcat-grafana-plugin-rest")
+			def dockImage = docker.build("tomcat-grafana-plugin-rest","./")
 			echo "push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}"
 //			dockImage.push("${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}")
 		}
