@@ -56,7 +56,9 @@ node {
 			for (war in wars) {
 				tmp_war = war.split("-")
 				echo "${tmp_war}"
-				tmp_war.remove(0).join("-")
+				tmp_war.remove(0)
+				echo "${tmp_war}"
+				tmp_war.join("-")
 				sh "mv war tmp_war"
 			}
 		}
