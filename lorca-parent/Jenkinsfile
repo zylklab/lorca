@@ -31,6 +31,7 @@ node {
 			sh "cd lorca-parent && '${mvnHome}/bin/mvn' --file pom.xml -P zylk -DtagNameFormat=@{project.artifactId}-@{project.version}-zylk -Dmaven.test.failure.ignore -DreleaseVersion=${version} -DdevelopmentVersion=${pom.version} -DpushChanges=false -DlocalCheckout=true -DpreparationGoals=initialize release:prepare release:perform -B"
 		}
 		stage ('Release docker image') {
+			sh "docker -v"
 			echo "build docker image from Dockerfile"
 			def dockImage = docker.build("tomcat-grafana-plugin-rest")
 			echo "push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}"
