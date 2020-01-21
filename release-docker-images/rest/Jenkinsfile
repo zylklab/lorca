@@ -51,7 +51,7 @@ node {
 				echo "curl --fail -L ${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}"
 				sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
 			}
-			wars = sh(returnStdout: true, script: "ls | grep latest | grep ${rest_artifact_id}")
+			wars = sh(returnStdout: true, script: "ls | grep latest | grep ${rest_artifact_id}").split()
 			echo "${wars}"
 			for (war in wars) {
 				tmp_war = war.split("-")
