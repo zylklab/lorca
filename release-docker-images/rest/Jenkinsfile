@@ -38,11 +38,6 @@ node {
 						pipelineTriggers([])])
 	}
 	
-	def deploy_remote_host
-	def tomcat_remote_path
-	def tomcat_deploy_credentials
-	def tomcat_deploy_user
-	
 	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
 		stage ('Prepare') {
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
@@ -56,7 +51,8 @@ node {
 				echo "latest version: ${rest_version}"
 			}
 			
-			versions = sh(returnStdout: true, script: "echo '${versions}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
+			versions = sh(returnStdout: true, script: "echo '${versions}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'").trim()
+			echo "${versions}"
 			// long version of: versions.split().reverse().sublist(0,10).join("\n")
 			versions = versions.split()
 			tmp_versions = versions.clone()
