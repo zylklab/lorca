@@ -57,7 +57,7 @@ node {
 				tmp_war = war.split("-")
 				echo "war.split() ${tmp_war}"
 				tmp_war = tmp_war - "latest"
-				tmp_war.join("-")
+				tmp_war = tmp_war.join("-")
 				sh "mv ${war} ${tmp_war}"
 			}
 		}
