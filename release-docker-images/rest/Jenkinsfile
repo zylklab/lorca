@@ -60,7 +60,7 @@ node {
 			sh "docker -v"
 			echo "build docker image from Dockerfile"
 			sh "pwd; ls"
-			def dockImage = docker.build("tomcat-grafana-plugin-rest","./")
+			def dockImage = docker.build("tomcat-grafana-plugin-rest","./release-docker-images/rest")
 			echo "push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}"
 //			dockImage.push("${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}")
 		}
