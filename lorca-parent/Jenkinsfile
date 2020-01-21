@@ -1,31 +1,43 @@
 node {
-   properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(), pipelineTriggers([])])
-   def mvnHome
-   def pom
-   def version
-   
-   // Mark the code checkout 'stage'....
-   stage ('Preparation'){
-	   	checkout scm
-        mvnHome = tool 'apache-maven-3.3.9-automatic'
-        echo "git clone ...."
-        
-        pom = readMavenPom file: './lorca-parent/pom.xml'
-        echo "pom(s) used...."
-        echo pom.name+"::"+pom.version
-        
-        version = pom.version.replace("-SNAPSHOT", ".${currentBuild.number}")
-        echo "version(s) replaced ..."
-        echo pom.name+"::"+pom.version+"::"+version
-        
-   }
-   if (env.BRANCH_NAME == "master") {
-	   stage ('Release zylk') {
-		   echo "release version::"+version+" repository url::https://services.zylk.net/nexus/content/repositories/bigdata-releases/"
-		   sh "cd lorca-parent && '${mvnHome}/bin/mvn' --file pom.xml -P zylk -DtagNameFormat=@{project.artifactId}-@{project.version}-zylk -Dmaven.test.failure.ignore -DreleaseVersion=${version} -DdevelopmentVersion=${pom.version} -DpushChanges=false -DlocalCheckout=true -DpreparationGoals=initialize release:prepare release:perform -B"
-	   }
-   }
-   stage('Results') {
-      
-   }
+	properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(), pipelineTriggers([])])
+	def mvnHome
+	def pom
+	def version
+
+	def repository_id = "bigdata-releases"
+	def group_id = "net.zylklab.bigdata"
+	def group_id_path = "net/zylklab/bigdata"
+	def artifact_id = "grafana-kafka-rest-docker-image"
+	def nexus_url = "https://services.zylk.net/nexus"
+	
+	// Mark the code checkout 'stage'....
+	stage ('Preparation'){
+		checkout scm
+		mvnHome = tool 'apache-maven-3.3.9-automatic'
+		echo "git clone ...."
+		
+		pom = readMavenPom file: './lorca-parent/pom.xml'
+		echo "pom(s) used...."
+		echo pom.name+"::"+pom.version
+		
+		version = pom.version.replace("-SNAPSHOT", ".${currentBuild.number}")
+		echo "version(s) replaced ..."
+		echo pom.name+"::"+pom.version+"::"+version
+		
+	}
+	if (env.BRANCH_NAME == "master") {
+		stage ('Release war') {
+			echo "release version::"+version+" repository url::https://services.zylk.net/nexus/content/repositories/bigdata-releases/"
+			sh "cd lorca-parent && '${mvnHome}/bin/mvn' --file pom.xml -P zylk -DtagNameFormat=@{project.artifactId}-@{project.version}-zylk -Dmaven.test.failure.ignore -DreleaseVersion=${version} -DdevelopmentVersion=${pom.version} -DpushChanges=false -DlocalCheckout=true -DpreparationGoals=initialize release:prepare release:perform -B"
+		}
+		stage ('Release docker image') {
+			echo "build docker image from Dockerfile"
+			def dockImage = docker.build("tomcat-grafana-plugin-rest")
+			echo "push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}"
+			dockImage.push("${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}")
+		}
+	}
+	stage('Results') {
+	
+	}
 }
