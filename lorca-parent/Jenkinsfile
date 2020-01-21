@@ -34,7 +34,7 @@ node {
 		stage ('Release docker image') {
 			sh "docker -v"
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
-				echo "curl --fail -L ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}"
+				echo "curl --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/@{project.artifactId}/@{project.version}/@{project.artifactId}-@{project.version}.war' -o @{project.artifactId}-@{project.version}.war"
 				sh "curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/@{project.artifactId}/@{project.version}/@{project.artifactId}-@{project.version}.war' -o @{project.artifactId}-@{project.version}.war"
 			}
 			echo "build docker image from Dockerfile"
