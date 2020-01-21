@@ -26,10 +26,11 @@ node {
 				tmp_versions.remove(tmp_versions.size()-1)
 			}
 			versions = tmp_versions.join("\n")
-			echo "${versions}"
+			echo "artifact versions: \n${versions}"
 		}
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
-		parameters([ 	string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
+		parameters([ 	string(defaultValue: 'ZYLK', description: 'Release environment', name: 'environment'),
+						string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
 						choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
 						pipelineTriggers([])])
 	}
