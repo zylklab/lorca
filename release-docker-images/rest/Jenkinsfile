@@ -5,21 +5,24 @@ node {
 	def artifact_id = "grafana-kafka-rest"
 	def artifact_type = "war"
 	def nexus_url = "https://services.zylk.net/nexus"
-	def rest_repository_url = "${nexus_url}/content/repositories/${repository_id}"
 	def nexus_read_credentials = "nexus-read-user"
+	
+	def nexus3_url = "http://nexus.zylk.net:8083"
+	def nexus3_credentials = "repository-docker-admin"
 	
 	def versions
 	def latest_version
 	
 	def dockerfile_path = "./release-docker-images/rest"
+	def image_name = "tomcat-grafana-plugin-rest"
 	
 	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
 	if(host_name.endsWith("zylk.net")) {
 		stage('Prepare') {
 			// Get versions for next build and to get latest release
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
-				echo "curl versions from Nexus API"
-				versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
+				echo "Get versions from Nexus API"
+				versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L '${nexus_url}/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
 			}
 			// long version of: versions.split().reverse().sublist(0,10).join("\n")
 			versions = versions.split()
@@ -49,28 +52,29 @@ node {
 	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {		
 		stage ('Get artifact') {
 			checkout scm
-			wars = sh(returnStdout: true, script: "ls ${dockerfile_path} | grep latest | grep ${rest_artifact_id} || echo ''").split()
-			if ( wars != [ '' ] ) {
-				for (war in wars) {
-					tmp_war = war.split("-")
-					tmp_war = tmp_war - "latest"
-					tmp_war = tmp_war.join("-")
-					sh "mv ${dockerfile_path}/${war} ${tmp_war}"
+			artifacts = sh(returnStdout: true, script: "ls ${dockerfile_path} | grep latest | grep ${rest_artifact_id} || echo ''").split()
+			if ( artifacts != [ '' ] ) {
+				for (art in artifacts) {
+					tmp_art = art.split("-")
+					tmp_art = tmp_art - "latest"
+					tmp_art = tmp_art.join("-")
+					sh "mv ${dockerfile_path}/${art} ${tmp_art}"
 				}
 			}
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
-				echo "curl --fail -L ${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}"
-				sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
+				echo "Get artifact from Nexus"
+				sh "curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
 			}
 		}
 
 		stage ('Build docker image') {
 			sh "docker -v"
-			echo "build docker image from Dockerfile"
-			sh "ls -lt ${dockerfile_path}"
-			def dockImage = docker.build("tomcat-grafana-plugin-rest","${dockerfile_path}")
-			echo "push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}"
-//			dockImage.push("${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}")
+			echo "Build docker image from Dockerfile located in ${dockerfile_path}"
+			def dockImage = docker.build("${image_name}","${dockerfile_path}")
+			echo "Push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}"
+			withCredentials([usernameColonPassword(credentialsId: "${nexus3_credentials}", variable: "USERPASS")]) {
+				dockImage.push("${nexus3_url}")
+			}
 		}
 	}
 	stage('Results') {
