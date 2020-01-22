@@ -82,7 +82,7 @@ node {
 //			}
 			withCredentials([usernamePassword(credentialsId: "${nexus3_credentials}", usernameVariable: "USER", passwordVariable: "PASS")]) {
 				sh "docker login -u ${USER} -p ${PASS} ${nexus3_repo}"
-				sh "docker push ${nexus3_repo}/${image_name}"
+				sh "docker push http://${nexus3_repo}/${image_name}"
 				sh "docker logout"
 				//dockImage.push("${nexus3_url}")
 			}
