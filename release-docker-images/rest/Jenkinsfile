@@ -51,7 +51,7 @@ node {
 			checkout scm
 			wars = sh(returnStdout: true, script: "ls ${dockerfile_path} | grep latest | grep ${rest_artifact_id} || echo ''").split()
 			if ( wars != [ '' ] ) {
-				echo "wars"
+				echo "${wars}"
 				for (war in wars) {
 					tmp_war = war.split("-")
 					tmp_war = tmp_war - "latest"
