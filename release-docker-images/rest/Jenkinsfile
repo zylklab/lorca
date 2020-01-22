@@ -7,7 +7,7 @@ node {
 	def nexus_url = "https://services.zylk.net/nexus"
 	def nexus_read_credentials = "nexus-read-user"
 	
-	def nexus3_repo = "http://nexus.zylk.net:8083"
+	def nexus3_repo = "nexus.zylk.net:8083"
 	def nexus3_credentials = "repository-docker-admin"
 	
 	def versions
