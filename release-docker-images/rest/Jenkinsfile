@@ -11,6 +11,8 @@ node {
 	def versions
 	def latest_version
 	
+	def dockerfile_path = "./release-docker-images/rest"
+	
 	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
 	if(host_name.endsWith("zylk.net")) {
 		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
@@ -23,7 +25,7 @@ node {
 	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
 		stage ('Prepare') {
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
-				echo "curl versions"
+				echo "curl versions from Nexus API"
 				versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
 			}
 			
@@ -48,9 +50,7 @@ node {
 		
 		stage ('Get artifact') {
 			checkout scm
-			sh "ls"
-			wars = sh(returnStdout: true, script: "ls | grep latest | grep ${rest_artifact_id} || echo ''").split()
-			echo "${wars}"
+			wars = sh(returnStdout: true, script: "ls ${dockerfile_path} | grep latest | grep ${rest_artifact_id} || echo ''").split()
 			if ( wars != [ '' ] ) {
 				for (war in wars) {
 					tmp_war = war.split("-")
@@ -61,16 +61,15 @@ node {
 			}
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 				echo "curl --fail -L ${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}"
-				sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
+				sh "curl -u '${USERPASS}' --fail -L '${rest_repository_url}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
 			}
-			sh "ls"
 		}
 
 		stage ('Build docker image') {
 			sh "docker -v"
 			echo "build docker image from Dockerfile"
-			sh "ls -lt ./release-docker-images/rest"
-			def dockImage = docker.build("tomcat-grafana-plugin-rest","./release-docker-images/rest")
+			sh "ls -lt ${dockerfile_path}"
+			def dockImage = docker.build("tomcat-grafana-plugin-rest","${dockerfile_path}")
 			echo "push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}"
 //			dockImage.push("${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}")
 		}
