@@ -15,20 +15,12 @@ node {
 	
 	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
 	if(host_name.endsWith("zylk.net")) {
-		properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
-		parameters([ 	string(defaultValue: 'ZYLK', description: 'Release environment', name: 'environment'),
-						string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
-						choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
-						pipelineTriggers([])])
-	}
-	
-	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {
-		stage ('Prepare') {
+		stage('Prepare') {
+			// Get versions for next build and to get latest release
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 				echo "curl versions from Nexus API"
 				versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L 'https://services.zylk.net/nexus/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
 			}
-			
 			// long version of: versions.split().reverse().sublist(0,10).join("\n")
 			versions = versions.split()
 			tmp_versions = versions.clone()
@@ -38,16 +30,23 @@ node {
 			while (tmp_versions.size() > 10) {
 				tmp_versions.remove(tmp_versions.size()-1)
 			}
-			versions = tmp_versions
-			if ("${rest_version}" == "Latest") {
-				rest_version = versions[0]
-				echo "latest version: ${rest_version}"
-			}
-			versions = versions.join("\n")
+			versions = tmp_versions.join("\n")
 			echo "artifact versions: \n${versions}"
 			
+			properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
+			parameters([ 	string(defaultValue: 'ZYLK', description: 'Release environment', name: 'environment'),
+							string(defaultValue: 'grafana-kafka-rest', description: 'Rest module artifact id (grafana-kafka-rest)', name: 'rest_artifact_id'),
+							choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
+							pipelineTriggers([])])
+			if ("${rest_version}" == "Latest") {
+				rest_version = versions.split()[0]
+				echo "latest version: ${rest_version}"
+			}
+			
 		}
-		
+	}
+	
+	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {		
 		stage ('Get artifact') {
 			checkout scm
 			wars = sh(returnStdout: true, script: "ls ${dockerfile_path} | grep latest | grep ${rest_artifact_id} || echo ''").split()
