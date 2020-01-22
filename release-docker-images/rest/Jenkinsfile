@@ -71,7 +71,7 @@ node {
 		stage ('Build docker image') {
 			sh "docker -v"
 			echo "Build docker image from Dockerfile located in ${dockerfile_path}"
-			sh "docker build -t ${nexus3_repo}/${image_name} ${dockerfile_path}"
+			sh "docker build -t http://${nexus3_repo}/${image_name} ${dockerfile_path}"
 			//dockImage = docker.build("${image_name}","${dockerfile_path}")
 		}
 		
@@ -82,7 +82,7 @@ node {
 //			}
 			withCredentials([usernamePassword(credentialsId: "${nexus3_credentials}", usernameVariable: "USER", passwordVariable: "PASS")]) {
 				sh "docker login -u ${USER} -p ${PASS} -e info@zylk.net http://${nexus3_repo}"
-				sh "docker push ${nexus3_repo}/${image_name}"
+				sh "docker push http://${nexus3_repo}/${image_name}"
 				sh "docker logout"
 				//dockImage.push("${nexus3_url}")
 			}
