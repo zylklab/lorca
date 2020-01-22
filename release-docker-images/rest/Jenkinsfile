@@ -76,12 +76,12 @@ node {
 		
 		stage ('Push docker image') {
 			echo "Push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}"
-			dockImage.withRegistry("http://nexus.zylk.net:8083/", "${nexus3_credentials}") {
-				dockImage.push()
-			}
-//			withCredentials([usernameColonPassword(credentialsId: "${nexus3_credentials}", variable: "USERPASS")]) {
-//				dockImage.push("${nexus3_url}")
+//			dockImage.withRegistry("http://nexus.zylk.net:8083/", "${nexus3_credentials}") {
+//				dockImage.push()
 //			}
+			withCredentials([usernameColonPassword(credentialsId: "${nexus3_credentials}", variable: "USERPASS")]) {
+				dockImage.push("${nexus3_url}")
+			}
 		}
 	}
 	stage('Results') {
