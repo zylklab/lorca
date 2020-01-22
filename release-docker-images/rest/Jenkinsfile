@@ -80,8 +80,8 @@ node {
 //			dockImage.withRegistry("http://nexus.zylk.net:8083/", "${nexus3_credentials}") {
 //				dockImage.push()
 //			}
-			withCredentials([usernameColonPassword(credentialsId: "${nexus3_credentials}", variable: "USERPASS")]) {
-				sh "docker login -u ${USERPASS} ${nexus3_repo}"
+			withCredentials([usernamePassword(credentialsId: "${nexus3_credentials}", usernameVariable: "USER", passwordVariable: "PASS")]) {
+				sh "docker login -u ${USER} -p ${PASS} ${nexus3_repo}"
 				sh "docker push ${nexus3_repo}/${image_name}"
 				sh "docker logout"
 				//dockImage.push("${nexus3_url}")
