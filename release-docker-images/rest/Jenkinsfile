@@ -47,6 +47,7 @@ node {
 		}
 		
 		stage ('Get artifact') {
+			checkout scm
 			sh "ls"
 			wars = sh(returnStdout: true, script: "ls | grep latest | grep ${rest_artifact_id} || echo ''").split()
 			echo "${wars}"
