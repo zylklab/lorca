@@ -66,11 +66,12 @@ node {
 				sh "curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
 			}
 		}
-
+		
+		def dockImage
 		stage ('Build docker image') {
 			sh "docker -v"
 			echo "Build docker image from Dockerfile located in ${dockerfile_path}"
-			def dockImage = docker.build("${image_name}","${dockerfile_path}")
+			dockImage = docker.build("${image_name}","${dockerfile_path}")
 		}
 		
 		stage ('Push docker image') {
