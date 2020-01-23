@@ -31,17 +31,6 @@ node {
 			echo "release version::"+version+" repository url::https://services.zylk.net/nexus/content/repositories/bigdata-releases/"
 			sh "cd lorca-parent && '${mvnHome}/bin/mvn' --file pom.xml -P zylk -DtagNameFormat=@{project.artifactId}-@{project.version}-zylk -Dmaven.test.failure.ignore -DreleaseVersion=${version} -DdevelopmentVersion=${pom.version} -DpushChanges=false -DlocalCheckout=true -DpreparationGoals=initialize release:prepare release:perform -B"
 		}
-		stage ('Release docker image') {
-			sh "docker -v"
-			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
-				echo "curl --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/@{project.artifactId}/@{project.version}/@{project.artifactId}-@{project.version}.war' -o @{project.artifactId}-@{project.version}.war"
-				sh "curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/@{project.artifactId}/@{project.version}/@{project.artifactId}-@{project.version}.war' -o @{project.artifactId}-@{project.version}.war"
-			}
-			echo "build docker image from Dockerfile"
-			def dockImage = docker.build("tomcat-grafana-plugin-rest")
-			echo "push docker image to nexus ${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}"
-//			dockImage.push("${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${artifact_id}")
-		}
 	}
 	stage('Results') {
 	
