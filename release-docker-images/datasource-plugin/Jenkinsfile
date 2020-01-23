@@ -1,0 +1,94 @@
+node {
+	def repository_id = "bigdata-releases"
+	def group_id = "net.zylklab.bigdata"
+	def group_id_path = "net/zylklab/bigdata"
+	def artifact_id = "grafana-kafka-plugin"
+	def artifact_type = "tar.gz"
+	def nexus_url = "https://services.zylk.net/nexus"
+	def nexus_read_credentials = "nexus-read-user"
+	
+	def nexus3_repo = "nexus.zylk.net:8083"
+	def nexus3_credentials = "repository-docker-admin"
+	
+	def versions
+	def latest_version
+	
+	def dockerfile_path = "./release-docker-images/datasource-plugin"
+	def image_name = "grafana-plus-plugin"
+	
+	def host_name = sh (returnStdout: true, script:"hostname -f").trim()
+	if(host_name.endsWith("zylk.net")) {
+		stage('Prepare') {
+			// Get versions for next build and to get latest release
+			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+				echo "Get versions from Nexus API"
+				versions = sh(returnStdout: true, script: "curl -X GET -u '${USERPASS}' --fail -L '${nexus_url}/service/local/lucene/search?repositoryId=${repository_id}&g=${group_id}&a=${artifact_id}' | sed -e '/version/ !d' | sed 's:<version>\\|</version>::g'")
+			}
+			// long version of: versions.split().reverse().sublist(0,10).join("\n")
+			versions = versions.split()
+			tmp_versions = versions.clone()
+			for (i = 0; i < versions.size(); i++) {
+				tmp_versions[-1-i] = versions[i]
+			}
+			while (tmp_versions.size() > 10) {
+				tmp_versions.remove(tmp_versions.size()-1)
+			}
+			versions = tmp_versions.join("\n")
+			echo "artifact versions: \n${versions}"
+			
+			properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
+			parameters([ 	string(defaultValue: 'ZYLK', description: 'Release environment', name: 'environment'),
+							string(defaultValue: "${artifact_id}", description: 'Rest module artifact id (${artifact_id})', name: 'rest_artifact_id'),
+							choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
+							pipelineTriggers([])])
+			if ("${rest_version}" == "Latest") {
+				rest_version = versions.split()[0]
+				echo "latest version: ${rest_version}"
+			}
+			
+		}
+	}
+	
+	if (env.BRANCH_NAME == "master" && environment == 'ZYLK') {		
+		stage ('Get artifact') {
+			checkout scm
+			artifacts = sh(returnStdout: true, script: "ls ${dockerfile_path} | grep latest | grep ${rest_artifact_id} || echo ''").split()
+			if ( artifacts != [ '' ] ) {
+				for (art in artifacts) {
+					tmp_art = art.split("-")
+					tmp_art = tmp_art - "latest"
+					tmp_art = tmp_art.join("-")
+					sh "mv ${dockerfile_path}/${art} ${tmp_art}"
+				}
+			}
+			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+				echo "Get artifact from Nexus"
+				sh "curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
+			}
+		}
+		
+//		def dockImage
+		stage ('Build docker image') {
+			sh "docker -v"
+			echo "Build docker image from Dockerfile located in ${dockerfile_path}"
+			sh "docker build -t ${nexus3_repo}/${image_name} ${dockerfile_path}"
+			//dockImage = docker.build("${image_name}","${dockerfile_path}")
+		}
+		
+		stage ('Push docker image') {
+			echo "Push docker image to Nexus3"
+//			dockImage.withRegistry("http://nexus.zylk.net:8083/", "${nexus3_credentials}") {
+//				dockImage.push()
+//			}
+			withCredentials([usernamePassword(credentialsId: "${nexus3_credentials}", usernameVariable: "USER", passwordVariable: "PASS")]) {
+				sh "docker login -u ${USER} -p ${PASS} ${nexus3_repo}"
+				sh "docker push ${nexus3_repo}/${image_name}"
+				sh "docker logout"
+				//dockImage.push("${nexus3_url}")
+			}
+		}
+	}
+	stage('Results') {
+	
+	}
+}
