@@ -37,9 +37,9 @@ node {
 			echo "artifact versions: \n${versions}"
 			
 			properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), disableConcurrentBuilds(),
-			parameters([ 	string(defaultValue: 'ZYLK', description: 'Release environment', name: 'environment'),
-							string(defaultValue: "${artifact_id}", description: 'Rest module artifact id (${artifact_id})', name: 'rest_artifact_id'),
-							choice(choices: "Latest\n${versions}", description: 'Rest module Version', name: 'rest_version')]),
+			parameters([ 	string(defaultValue: "ZYLK", description: "Release environment", name: 'environment'),
+							string(defaultValue: "${artifact_id}", description: "Rest module artifact id (${artifact_id})", name: 'rest_artifact_id'),
+							choice(choices: "Latest\n${versions}", description: "Rest module Version", name: 'rest_version')]),
 							pipelineTriggers([])])
 			if ("${rest_version}" == "Latest") {
 				rest_version = versions.split()[0]
