@@ -31,7 +31,8 @@ node {
 				tmp_versions[-1-i] = versions[i]
 			}
 			while (tmp_versions.size() > 10) {
-				tmp_versions.remove(tmp_versions.size()-1)
+				//tmp_versions.remove(tmp_versions.size()-1)
+				tmp_versions = tmp_versions - tmp_versions[ -1 ]
 			}
 			versions = tmp_versions.join("\n")
 			echo "artifact versions: \n${versions}"
