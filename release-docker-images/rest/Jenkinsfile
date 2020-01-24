@@ -73,6 +73,7 @@ node {
 			sh "docker -v"
 			echo "Build docker image from Dockerfile located in ${dockerfile_path}"
 			sh "docker build -t ${nexus3_repo}/${image_name} ${dockerfile_path}"
+			sh "docker tag ${nexus3_repo}/${image_name}:latest ${nexus3_repo}/${image_name}:${rest_version}"
 			//dockImage = docker.build("${image_name}","${dockerfile_path}")
 		}
 		
