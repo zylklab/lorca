@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+        grafana:
+                image: nexus.zylk.net:8083/grafana-plus-plugin
+                ports:
+                        - "3001:3000"
+                volumes:
+                        - type: bind
+                          source: /home/foo/pruebas/docker-grafana-plugin/grafana.db
+                          target: /var/lib/grafana/grafana.db
+                depends_on:
+                        - tomcat
+        tomcat:
+                image: nexus.zylk.net:8083/tomcat-grafana-plugin-rest
+                ports:
+                        - "8081:8080"
