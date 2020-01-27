@@ -64,16 +64,29 @@ node {
 			}
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 				echo "Get artifact from Nexus"
-				sh "curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
+				"curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
 			}
+			
 		}
 		
-		def dockImage
-		stage ('Build docker image') {
+		/*
+		stage ('Check docker images') {
 			sh "docker -v"
+			echo "Check which image versions already exists in Nexus3 to avoid overwriting them"
+			def im_verss
+			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
+				im_verss = sh(returnStdout: true, script: "curl -u '${USERPASS}' -X GET --fail -L 'http://nexus.zylk.net:8081/service/rest/v1/search?repository=docker-hosted&name=${image_name}' | jq ['.items | .[] | .version']")
+				echo "${im_verss}"
+			}
+			
+		}
+		*/
+		
+		//def dockImage
+		stage ('Build docker image') {
 			echo "Build docker image from Dockerfile located in ${dockerfile_path}"
-			sh "docker build -t ${nexus3_repo}/${image_name} ${dockerfile_path}"
-			sh "docker tag ${nexus3_repo}/${image_name}:latest ${nexus3_repo}/${image_name}:${rest_version}"
+			sh "docker build -t ${nexus3_repo}/${image_name}:0.1 ${dockerfile_path}"
+			//sh "docker tag ${nexus3_repo}/${image_name}:latest ${nexus3_repo}/${image_name}:${rest_version}"
 			//dockImage = docker.build("${image_name}","${dockerfile_path}")
 		}
 		
