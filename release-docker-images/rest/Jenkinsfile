@@ -64,7 +64,7 @@ node {
 			}
 			withCredentials([usernameColonPassword(credentialsId: "${nexus_read_credentials}", variable: "USERPASS")]) {
 				echo "Get artifact from Nexus"
-				"curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
+				sh "curl -u '${USERPASS}' --fail -L '${nexus_url}/content/repositories/${repository_id}/${group_id_path}/${rest_artifact_id}/${rest_version}/${rest_artifact_id}-${rest_version}.${artifact_type}' -o ${dockerfile_path}/latest-${rest_artifact_id}-${rest_version}.${artifact_type}"
 			}
 			
 		}
@@ -84,7 +84,6 @@ node {
 		
 		//def dockImage
 		stage ('Build docker image') {
-			sh "ls"
 			echo "Build docker image from Dockerfile located in ${dockerfile_path}"
 			sh "docker build -t ${nexus3_repo}/${image_name}:0.1 ${dockerfile_path}"
 			//sh "docker tag ${nexus3_repo}/${image_name}:latest ${nexus3_repo}/${image_name}:${rest_version}"
