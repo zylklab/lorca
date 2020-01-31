@@ -1,16 +1,28 @@
 version: '3.7'
 services:
         grafana:
-                image: nexus.zylk.net:8083/grafana-plus-plugin
-                ports:
-                        - "3001:3000"
+                image: nexus.zylk.net:8083/grafana-plus-plugin:0.1
                 volumes:
-                        - type: bind
-                          source: /home/foo/pruebas/docker-grafana-plugin/grafana.db
-                          target: /var/lib/grafana/grafana.db
+                        - grafana-db:/var/lib/grafana/
+                hostname: "grafana-docker"
+                networks:
+                        internal-network:
+                                ipv4_address: 172.30.1.30
                 depends_on:
                         - tomcat
         tomcat:
-                image: nexus.zylk.net:8083/tomcat-grafana-plugin-rest
-                ports:
-                        - "8081:8080"
+                image: nexus.zylk.net:8083/tomcat-grafana-plugin-rest:0.1
+                hostname: "tomcat-docker"
+                networks:
+                        - internal-network
+volumes:
+        grafana-db:
+                name: grafana-db
+networks:
+        internal-network:
+                driver: bridge
+                internal: true
+                ipam:
+                        driver: default
+                        config:
+                                - subnet: 172.30.1.0/24
