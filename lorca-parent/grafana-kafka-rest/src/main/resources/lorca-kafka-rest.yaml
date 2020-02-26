@@ -240,7 +240,7 @@ kafka-datasources:
    4:
       kafka-native:
                      bootstrap.servers: "kafka-cluster-kafka-bootstrap:9092"
-                     group.id: "grafanaConsumerGroup01"
+                     group.id: "grafanaConsumerGroup04"
                      key.deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
                      value.deserializer: "net.zylklab.grafana.kafka.avro.AvroRawEventDeserializer"
                      max.poll.records: 1000
@@ -252,7 +252,7 @@ kafka-datasources:
 
       timestamp-field: "timestamp"
       value-field: "value"
-      id-field: "id"
+      id-field: "var_id"
       value-type: "double"
       vars: [
                {"key": 1, "value": "Grosor"},
