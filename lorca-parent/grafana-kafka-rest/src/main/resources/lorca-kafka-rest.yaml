@@ -235,3 +235,75 @@ kafka-datasources:
                {"key": 50, "value": "Value50"}
             ]
       kafka-version: "2.0.0"
+
+### RAW EVENTS ZYLKAKS ###
+   4:
+      kafka-native:
+                     bootstrap.servers: "kafka-cluster-kafka-bootstrap:9092"
+                     group.id: "grafanaConsumerGroup01"
+                     key.deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+                     value.deserializer: "net.zylklab.grafana.kafka.avro.AvroRawEventDeserializer"
+                     max.poll.records: 1000
+                     enable.auto.commit: false
+                     auto.offset.reset: "latest"
+      topic-name: "RAW-EVENT"
+      topic-partitions-number: 2
+      avro-schema: "{\"type\":\"record\",\"name\":\"RawEvent\",\"fields\":[{\"name\":\"factory\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"var_id\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"value\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"timestamp\",\"type\":[\"null\",\"long\"],\"default\":null}]}"
+
+      timestamp-field: "timestamp"
+      value-field: "value"
+      id-field: "id"
+      value-type: "double"
+      vars: [
+               {"key": 1, "value": "Grosor"},
+               {"key": 2, "value": "Aceleración"},
+               {"key": 3, "value": "Velocidad"},
+               {"key": 4, "value": "Longitud"},
+               {"key": 5, "value": "Value5"},
+               {"key": 6, "value": "Value6"},
+               {"key": 7, "value": "Value7"},
+               {"key": 8, "value": "Value8"},
+               {"key": 9, "value": "Value9"},
+               {"key": 10, "value": "Value10"},
+               {"key": 11, "value": "Value11"},
+               {"key": 12, "value": "Value12"},
+               {"key": 13, "value": "Value13"},
+               {"key": 14, "value": "Value14"},
+               {"key": 15, "value": "Value15"},
+               {"key": 16, "value": "Value16"},
+               {"key": 17, "value": "Value17"},
+               {"key": 18, "value": "Value18"},
+               {"key": 19, "value": "Value19"},
+               {"key": 20, "value": "Value20"},
+               {"key": 21, "value": "Value21"},
+               {"key": 22, "value": "Value22"},
+               {"key": 23, "value": "Value23"},
+               {"key": 24, "value": "Value24"},
+               {"key": 25, "value": "Value25"},
+               {"key": 26, "value": "Value26"},
+               {"key": 27, "value": "Value27"},
+               {"key": 28, "value": "Value28"},
+               {"key": 29, "value": "Value29"},
+               {"key": 30, "value": "Value30"},
+               {"key": 31, "value": "Value31"},
+               {"key": 32, "value": "Value32"},
+               {"key": 33, "value": "Value33"},
+               {"key": 34, "value": "Value34"},
+               {"key": 35, "value": "Value35"},
+               {"key": 36, "value": "Value36"},
+               {"key": 37, "value": "Value37"},
+               {"key": 38, "value": "Value38"},
+               {"key": 39, "value": "Value39"},
+               {"key": 40, "value": "Value40"},
+               {"key": 41, "value": "Value41"},
+               {"key": 42, "value": "Value42"},
+               {"key": 43, "value": "Value43"},
+               {"key": 44, "value": "Value44"},
+               {"key": 45, "value": "Value45"},
+               {"key": 46, "value": "Value46"},
+               {"key": 47, "value": "Value47"},
+               {"key": 48, "value": "Value48"},
+               {"key": 49, "value": "Value49"},
+               {"key": 50, "value": "Value50"}
+            ]
+      kafka-version: "2.4.0"
