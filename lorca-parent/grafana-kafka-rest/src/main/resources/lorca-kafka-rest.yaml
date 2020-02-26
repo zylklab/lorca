@@ -237,7 +237,7 @@ kafka-datasources:
       kafka-version: "2.0.0"
 
 ### RAW EVENTS ZYLKAKS ###
-   1:
+   raw-zylkaks:
       kafka-native:
                      bootstrap.servers: "kafka-cluster-kafka-bootstrap:9092"
                      group.id: "grafanaConsumerGroup01"
